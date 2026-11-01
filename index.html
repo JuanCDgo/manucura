@@ -1,0 +1,1834 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#FFF5F7">
+  <title>Nails · Studio Sofía | App de Clientas</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            nailRose: {
+              50: '#FFF1F2',
+              100: '#FFE4E6',
+              200: '#FECDD3',
+              300: '#FDA4AF',
+              400: '#FB7185',
+              500: '#F43F5E',
+              600: '#E11D48',
+              700: '#BE123C',
+              800: '#9F1239',
+              900: '#881337',
+            },
+            glamGold: {
+              50: '#FEFDF5',
+              100: '#FDFBE8',
+              200: '#FAF4BE',
+              400: '#EAB308',
+              500: '#CA8A04',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+    body {
+      background-color: #F8EBF0;
+      color: #1E293B;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    input, textarea, select {
+      user-select: text;
+      -webkit-user-select: text;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .nail-card-shadow {
+      box-shadow: 0 4px 20px -2px rgba(225, 29, 72, 0.06), 0 2px 6px -1px rgba(225, 29, 72, 0.04);
+    }
+    .modal-backdrop {
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex justify-center items-start sm:py-6">
+
+  <!-- Main Mobile Frame Container -->
+  <div class="w-full max-w-md bg-[#FFF5F7] min-h-screen sm:min-h-[880px] sm:rounded-[36px] sm:shadow-2xl sm:border-[5px] sm:border-slate-800 flex flex-col relative overflow-hidden pb-8">
+    
+    <!-- ========================================== -->
+    <!-- VISTA 1: PANEL DE LA MANICURA (ADMIN)      -->
+    <!-- ========================================== -->
+    <div id="adminView" class="flex-1 flex flex-col">
+      <!-- Top Header Bar -->
+      <header class="pt-6 px-5 pb-4 bg-[#FFF5F7] sticky top-0 z-20 border-b border-rose-100">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-rose-500 to-pink-500 p-0.5 shadow-md flex-shrink-0 cursor-pointer" onclick="openProfileModal()">
+              <div id="headerLogoContainer" class="w-full h-full bg-white rounded-full flex items-center justify-center overflow-hidden border border-rose-100">
+                <span class="text-2xl" id="profileAvatar">💅</span>
+              </div>
+            </div>
+            <div>
+              <div class="flex flex-wrap items-center gap-1.5 cursor-pointer" onclick="openProfileModal()">
+                <h1 class="text-xl font-black tracking-tight text-slate-900" id="headerTitle">Nails · Studio Sofía</h1>
+                <span id="turneroHeaderBadge" class="text-[10px] text-slate-500 bg-slate-200/90 px-2 py-0.5 rounded-full font-bold transition-colors">📅 Turnero OFF</span>
+              </div>
+              <p class="text-xs font-semibold text-rose-600 tracking-wide flex items-center gap-1.5" id="headerSubtitle">
+                <span>mis clientas 💅</span>
+                <span class="text-rose-300">·</span>
+                <span class="text-[11px] font-medium text-slate-500" id="argClock">🇦🇷 --:-- hs</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <!-- Google Drive Backup Button -->
+            <button onclick="openBackupModal()" class="w-10 h-10 rounded-full bg-white border border-rose-200 flex items-center justify-center text-rose-600 hover:bg-rose-50 active:scale-95 transition-transform shadow-sm relative" title="Copia de seguridad en Google Drive">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path>
+              </svg>
+              <span id="backupStatusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white absolute -top-0.5 -right-0.5 hidden"></span>
+            </button>
+
+            <!-- Config Button -->
+            <button onclick="openProfileModal()" class="w-10 h-10 rounded-full bg-white border border-rose-200 flex items-center justify-center text-slate-600 hover:bg-rose-50 active:scale-95 transition-transform shadow-sm" title="Ajustes y Turnero">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Stats Metrics -->
+        <div class="grid grid-cols-3 gap-2 mt-4">
+          <div onclick="setFilter('all')" class="bg-white rounded-2xl p-2.5 border border-rose-100 shadow-sm text-center cursor-pointer hover:border-rose-300 transition-all">
+            <p class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Total</p>
+            <p class="text-base font-black text-slate-800 mt-0.5" id="statTotalClients">0</p>
+          </div>
+          <div onclick="setFilter('due')" class="bg-amber-50 rounded-2xl p-2.5 border border-amber-200/80 shadow-sm text-center cursor-pointer hover:border-amber-400 transition-all">
+            <p class="text-[10px] uppercase tracking-wider font-bold text-amber-700">Toca Service</p>
+            <p class="text-base font-black text-amber-800 mt-0.5" id="statPendingTurn">0</p>
+          </div>
+          <div onclick="setFilter('debt')" class="bg-rose-50/70 rounded-2xl p-2.5 border border-rose-200 shadow-sm text-center cursor-pointer hover:border-rose-300 transition-all relative flex flex-col items-center justify-between" title="Toca para ver clientas con saldo pendiente">
+            <p class="text-[10px] uppercase tracking-wider font-bold text-rose-700">Por Cobrar</p>
+            <div class="my-auto flex items-center justify-center py-1">
+              <span id="statPendingMoneyDot" class="w-3 h-3 rounded-full bg-emerald-500 shadow-sm ring-4 ring-emerald-500/20 inline-block"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search Box + Top Nueva Clienta Button -->
+        <div class="mt-3 flex items-center gap-2">
+          <div class="relative flex-1">
+            <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <input 
+              type="text" 
+              id="searchInput" 
+              placeholder="Buscar por clienta, esmalte o diseño..." 
+              oninput="renderClients()"
+              class="w-full bg-white rounded-xl pl-9 pr-3 py-2.5 text-xs sm:text-sm border border-rose-200 focus:outline-none focus:ring-2 focus:ring-rose-400 placeholder:text-slate-400"
+            >
+          </div>
+          <button 
+            onclick="openAddModal()" 
+            class="bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2.5 rounded-xl font-black text-xs shadow-md active:scale-95 transition-all flex items-center gap-1.5 flex-shrink-0"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
+            </svg>
+            <span>Nueva Clienta</span>
+          </button>
+        </div>
+
+        <!-- Filter Chips (Wrapped so none get cut off) -->
+        <div class="flex flex-wrap items-center gap-1.5 mt-3 pt-0.5">
+          <button onclick="setFilter('all')" id="filter-all" class="filter-pill px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap bg-rose-600 text-white transition-all shadow-sm">
+            Todas
+          </button>
+          <button onclick="setFilter('due')" id="filter-due" class="filter-pill px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap bg-white text-slate-600 border border-rose-200 transition-all">
+            ⏰ Toca Service
+          </button>
+          <button onclick="setFilter('serviceType')" id="filter-serviceType" class="filter-pill px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap bg-white text-slate-600 border border-rose-200 transition-all">
+            💎 Esculpidas / Kapping
+          </button>
+          <button onclick="setFilter('debt')" id="filter-debt" class="filter-pill px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap bg-white text-slate-600 border border-rose-200 transition-all">
+            💵 Con Saldo
+          </button>
+          <button onclick="setFilter('paid')" id="filter-paid" class="filter-pill px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap bg-white text-slate-600 border border-rose-200 transition-all">
+            ✓ Al Día
+          </button>
+        </div>
+      </header>
+
+      <!-- Clients List Section -->
+      <main class="flex-1 px-4 py-3 pb-8 space-y-3" id="clientsList">
+        <!-- Cards will be dynamically injected here -->
+      </main>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VISTA 2: TURNERO ONLINE PARA LA CLIENTA    -->
+    <!-- ========================================== -->
+    <div id="clientBookingView" class="flex-1 flex flex-col hidden bg-[#FFF5F7]">
+      <!-- Barra superior de vista previa (solo si la manicura la está probando) -->
+      <div id="previewBanner" class="bg-rose-900 text-rose-100 px-4 py-2 text-xs font-bold flex items-center justify-between hidden">
+        <span>👁️ Vista previa del Turnero para Clientas</span>
+        <button onclick="exitBookingPreview()" class="bg-white/20 hover:bg-white/30 px-2.5 py-1 rounded-lg font-black text-[11px] active:scale-95">
+          ← Volver a mis clientas
+        </button>
+      </div>
+
+      <!-- Header del Turnero -->
+      <div class="pt-6 px-5 pb-4 bg-white border-b border-rose-100 shadow-sm">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-rose-500 to-pink-500 p-0.5 shadow-md flex-shrink-0">
+            <div id="bookingLogoContainer" class="w-full h-full bg-white rounded-full flex items-center justify-center overflow-hidden border border-rose-100">
+              <span class="text-2xl">💅</span>
+            </div>
+          </div>
+          <div>
+            <span class="text-[10px] uppercase tracking-wider font-black text-rose-600 bg-rose-100 px-2 py-0.5 rounded-full">Turnero Nails Online</span>
+            <h1 class="text-xl font-black text-slate-900 mt-0.5" id="bookingSalonTitle">Nails · Studio Sofía</h1>
+            <p class="text-xs text-slate-500">Elegí tu turno o service en segundos 💅</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cuerpo del Turnero -->
+      <div class="p-5 space-y-5 flex-1">
+        <!-- 1. Nombre de la clienta -->
+        <div class="bg-white p-4 rounded-3xl border border-rose-100 nail-card-shadow space-y-2">
+          <label class="block text-xs font-black uppercase tracking-wider text-rose-800">1. Tu Nombre y Apellido</label>
+          <input 
+            type="text" 
+            id="bookingClientName" 
+            placeholder="Escribí tu nombre completo..." 
+            oninput="updateBookingSummary()"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-rose-200 focus:ring-2 focus:ring-rose-400 focus:outline-none text-sm font-bold bg-[#FFF5F7]"
+          >
+        </div>
+
+        <!-- 2. Servicio de Manicuría -->
+        <div class="bg-white p-4 rounded-3xl border border-rose-100 nail-card-shadow space-y-3">
+          <label class="block text-xs font-black uppercase tracking-wider text-rose-800">2. Elegí tu Servicio</label>
+          <div class="grid grid-cols-2 gap-2" id="bookingServiceButtons">
+            <button type="button" onclick="selectBookingService('Esmaltado Semipermanente')" data-srv="Esmaltado Semipermanente" class="booking-srv-btn p-2.5 rounded-xl border text-xs font-black text-left transition-all bg-rose-600 text-white border-rose-600 shadow-sm">
+              💅 Semipermanente
+            </button>
+            <button type="button" onclick="selectBookingService('Kapping Gel / Acrigel')" data-srv="Kapping Gel / Acrigel" class="booking-srv-btn p-2.5 rounded-xl border text-xs font-black text-left transition-all bg-[#FFF5F7] text-slate-700 border-rose-200">
+              🛡️ Kapping Gel
+            </button>
+            <button type="button" onclick="selectBookingService('Uñas Esculpidas')" data-srv="Uñas Esculpidas" class="booking-srv-btn p-2.5 rounded-xl border text-xs font-black text-left transition-all bg-[#FFF5F7] text-slate-700 border-rose-200">
+              💎 Uñas Esculpidas
+            </button>
+            <button type="button" onclick="selectBookingService('Soft Gel / Tips')" data-srv="Soft Gel / Tips" class="booking-srv-btn p-2.5 rounded-xl border text-xs font-black text-left transition-all bg-[#FFF5F7] text-slate-700 border-rose-200">
+              ✨ Soft Gel
+            </button>
+            <button type="button" onclick="selectBookingService('Service / Mantenimiento')" data-srv="Service / Mantenimiento" class="booking-srv-btn p-2.5 rounded-xl border text-xs font-black text-left transition-all bg-[#FFF5F7] text-slate-700 border-rose-200">
+              🔄 Service Esculpidas
+            </button>
+            <button type="button" onclick="selectBookingService('Belleza de Pies / Pedicura')" data-srv="Belleza de Pies / Pedicura" class="booking-srv-btn p-2.5 rounded-xl border text-xs font-black text-left transition-all bg-[#FFF5F7] text-slate-700 border-rose-200">
+              🦶 Belleza de Pies
+            </button>
+          </div>
+
+          <!-- Opcional Diseño / Nail Art -->
+          <div class="pt-3 border-t border-rose-100 space-y-1.5">
+            <label class="block text-[11px] font-bold text-slate-700">🎨 Estilo / Diseño que te gustaría:</label>
+            <input 
+              type="text" 
+              id="bookingDesignPreference" 
+              placeholder="Ej: Francesita, Vía Láctea, Baby boomer, Nail art simple..."
+              oninput="updateBookingSummary()"
+              class="w-full px-3 py-2 rounded-xl border border-rose-200 focus:ring-2 focus:ring-rose-400 focus:outline-none text-xs font-semibold bg-[#FFF5F7]"
+            >
+          </div>
+        </div>
+
+        <!-- 3. Selección de Día -->
+        <div class="bg-white p-4 rounded-3xl border border-rose-100 nail-card-shadow space-y-2">
+          <label class="block text-xs font-black uppercase tracking-wider text-rose-800">3. Elegí el Día</label>
+          <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar" id="bookingDaysContainer">
+            <!-- Días generados dinámicamente -->
+          </div>
+        </div>
+
+        <!-- 4. Selección de Horario -->
+        <div class="bg-white p-4 rounded-3xl border border-rose-100 nail-card-shadow space-y-2">
+          <label class="block text-xs font-black uppercase tracking-wider text-rose-800">4. Elegí el Horario</label>
+          <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-48 overflow-y-auto pr-1" id="bookingHoursContainer">
+            <!-- Horas generadas dinámicamente -->
+          </div>
+        </div>
+
+        <!-- Resumen y Confirmación -->
+        <div class="bg-gradient-to-br from-rose-50 to-pink-50 p-4 rounded-3xl border border-rose-200 space-y-3">
+          <div class="flex items-center justify-between text-xs font-bold text-rose-900">
+            <span>Resumen del turno:</span>
+            <span id="bookingSummaryBadge" class="text-rose-600 bg-white px-2.5 py-0.5 rounded-full border border-rose-200">Incompleto</span>
+          </div>
+          <p class="text-xs text-slate-700 font-medium" id="bookingSummaryText">
+            Completá tu nombre, servicio, día y hora para enviar tu reserva por WhatsApp.
+          </p>
+          <button 
+            type="button" 
+            id="btnSendBookingWhatsApp" 
+            onclick="sendBookingViaWhatsApp()" 
+            disabled 
+            class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-sm shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all opacity-50 cursor-not-allowed"
+          >
+            <span>Confirmar Turno por WhatsApp</span>
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.073.376-.044.101-.116.433-.506.549-.68.116-.173.231-.145.39-.086s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824zm-3.392-12.416c-5.514 0-10 4.486-10 10 0 1.761.459 3.418 1.261 4.864l-1.34 4.898 5.02-1.317c1.402.766 2.999 1.199 4.699 1.199 5.514 0 10-4.486 10-10s-4.486-10-10-10z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MODAL: AGREGAR / EDITAR CLIENTA -->
+  <div id="clientModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 modal-backdrop hidden transition-opacity">
+    <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl max-h-[92vh] overflow-y-auto no-scrollbar p-6 shadow-2xl flex flex-col">
+      <div class="flex items-center justify-between pb-3 border-b border-rose-100">
+        <h2 class="text-lg font-black text-slate-900" id="modalTitle">Nueva Clienta</h2>
+        <button onclick="closeClientModal()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200">
+          ✕
+        </button>
+      </div>
+
+      <form id="clientForm" onsubmit="saveClient(event)" class="space-y-4 mt-4">
+        <input type="hidden" id="clientId">
+
+        <!-- Nombre -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nombre de la Clienta</label>
+          <input 
+            type="text" 
+            id="clientName" 
+            required 
+            placeholder="Ej: Valentina Rossi" 
+            class="w-full px-3.5 py-2.5 rounded-xl border border-rose-200 focus:ring-2 focus:ring-rose-400 focus:outline-none text-sm font-semibold bg-white"
+          >
+        </div>
+
+        <!-- WhatsApp -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">WhatsApp (con código de área)</label>
+          <div class="flex">
+            <span class="inline-flex items-center px-3 rounded-l-xl border border-r-0 border-rose-200 bg-rose-50 text-rose-600 text-sm font-semibold">
+              +
+            </span>
+            <input 
+              type="tel" 
+              id="clientPhone" 
+              required 
+              placeholder="5491112345678" 
+              class="w-full px-3.5 py-2.5 rounded-r-xl border border-rose-200 focus:ring-2 focus:ring-rose-400 focus:outline-none text-sm font-semibold bg-white"
+            >
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Ejemplo Argentina: 54911... (sin el 15 ni guiones)</p>
+        </div>
+
+        <!-- Servicios de Manicuría -->
+        <div class="bg-rose-50/50 p-3.5 rounded-2xl border border-rose-100 space-y-3">
+          <label class="block text-xs font-bold text-rose-900 uppercase tracking-wider">Servicio & Estilo de Uñas</label>
+          
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Servicio</label>
+              <select id="clientService" class="w-full px-3 py-2 rounded-xl border border-rose-200 focus:ring-2 focus:ring-rose-400 focus:outline-none text-xs font-bold bg-white text-slate-800">
+                <option value="Semipermanente">💅 Semipermanente</option>
+                <option value="Kapping Gel">🛡️ Kapping Gel</option>
+                <option value="Uñas Esculpidas">💎 Uñas Esculpidas</option>
+                <option value="Soft Gel">✨ Soft Gel</option>
+                <option value="Service Esculpidas">🔄 Service Esculpidas</option>
+                <option value="Belleza de Pies">🦶 Belleza de Pies</option>
+                <option value="Retiro">🧼 Retiro de Material</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Forma de Uña</label>
+              <select id="clientNailShape" class="w-full px-3 py-2 rounded-xl border border-rose-200 focus:ring-2 focus:ring-rose-400 focus:outline-none text-xs font-semibold bg-white text-slate-800">
+                <option value="Almendra">Almendrada</option>
+                <option value="Cuadrada">Cuadrada</option>
+                <option value="Semiredonda">Redonda / Oval</option>
+                <option value="Coffin">Coffin / Ballerina</option>
+                <option value="Stiletto">Stiletto</option>
+                <option value="Natural">Natural cortita</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Color / Tono habitual o Diseño preferido -->
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">🎨 Color, Tono o Deco habitual</label>
+            <input 
+              type="text" 
+              id="clientColor" 
+              placeholder="Ej: Vía Láctea con glitters, Francesita, Rojo Rubí" 
+              class="w-full px-3 py-2 rounded-xl border border-rose-200 focus:ring-2 focus:ring-rose-400 focus:outline-none text-xs font-semibold bg-white"
+            >
+          </div>
+        </div>
+
+        <!-- Fecha Última Visita y Frecuencia de Service -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Última Atención</label>
+            <input 
+              type="date" 
+              id="clientLastVisit" 
+              required 
+              class="w-full px-3 py-2 rounded-xl border border-rose-200 focus:ring-2 focus:ring-rose-400 focus:outline-none text-sm font-medium bg-white"
+            >
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Service Cada</label>
+            <select id="clientInterval" class="w-full px-3 py-2 rounded-xl border border-rose-200 focus:ring-2 focus:ring-rose-400 focus:outline-none text-sm font-medium bg-white">
+              <option value="2">2 semanas (crecimiento rápido)</option>
+              <option value="3" selected>3 semanas (estándar)</option>
+              <option value="4">4 semanas (service mensual)</option>
+              <option value="5">5 semanas</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Saldo / Deuda -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Estado de Cobro / Seña</label>
+          <div class="grid grid-cols-2 gap-3 items-center">
+            <label class="flex items-center gap-2 p-2.5 border rounded-xl cursor-pointer hover:bg-rose-50/50 border-rose-200" id="paidOptionLabel">
+              <input type="radio" name="paymentState" value="paid" checked onchange="toggleDebtInput(false)">
+              <span class="text-sm font-bold text-emerald-700">✓ Al Día</span>
+            </label>
+            <label class="flex items-center gap-2 p-2.5 border rounded-xl cursor-pointer hover:bg-rose-50/50 border-rose-200" id="debtOptionLabel">
+              <input type="radio" name="paymentState" value="debt" onchange="toggleDebtInput(true)">
+              <span class="text-sm font-bold text-rose-600">Con Saldo</span>
+            </label>
+          </div>
+          <div id="debtAmountContainer" class="mt-2 hidden">
+            <div class="relative">
+              <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-rose-500 font-bold">$</span>
+              <input 
+                type="number" 
+                id="clientDebt" 
+                placeholder="Monto pendiente (ej: 5000)" 
+                class="w-full pl-8 pr-3.5 py-2 rounded-xl border border-rose-300 focus:ring-2 focus:ring-rose-400 focus:outline-none text-sm font-bold text-rose-700 bg-rose-50/50"
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Notas técnicas / Ficha -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Ficha Técnica / Notas de la clienta</label>
+          <textarea 
+            id="clientNotes" 
+            rows="2" 
+            placeholder="Ej: Cutículas sensibles. Usa base niveladora rubber. Le gusta terminar con top coat ultra brillante." 
+            class="w-full px-3.5 py-2 rounded-xl border border-rose-200 focus:ring-2 focus:ring-rose-400 focus:outline-none text-xs font-normal bg-white"
+          ></textarea>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="pt-2 flex gap-3">
+          <button 
+            type="button" 
+            id="btnDeleteClient" 
+            onclick="deleteCurrentClient()" 
+            class="hidden px-4 py-3 rounded-xl border border-rose-200 text-rose-600 font-bold text-xs hover:bg-rose-50 active:scale-95 transition-all"
+          >
+            Eliminar
+          </button>
+          <button 
+            type="submit" 
+            class="flex-1 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-sm shadow-md active:scale-95 transition-all"
+          >
+            Guardar Clienta
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: PERFIL, AJUSTES Y TURNERO ONLINE -->
+  <div id="profileModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 modal-backdrop hidden transition-opacity">
+    <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl max-h-[92vh] overflow-y-auto no-scrollbar p-6 shadow-2xl flex flex-col space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-rose-100">
+        <h2 class="text-lg font-black text-slate-900">Configuración & Turnero</h2>
+        <button onclick="closeProfileModal()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200">
+          ✕
+        </button>
+      </div>
+
+      <!-- Sección 1: Datos del Estudio y Logo -->
+      <div class="bg-rose-50/50 p-4 rounded-2xl border border-rose-100 space-y-3">
+        <h3 class="text-xs font-black uppercase tracking-wider text-rose-800">1. Tu Estudio o Salón de Uñas</h3>
+        
+        <!-- Subir Logo o Foto -->
+        <div class="flex items-center gap-3">
+          <div class="w-16 h-16 rounded-full bg-white border-2 border-rose-300 flex items-center justify-center overflow-hidden shadow-sm flex-shrink-0 relative">
+            <img id="settingsLogoPreview" src="" alt="Logo preview" class="w-full h-full object-cover hidden">
+            <span id="settingsLogoEmoji" class="text-3xl">💅</span>
+          </div>
+          <div class="flex-1">
+            <label class="block text-xs font-bold text-slate-700 mb-1">Logo o Foto de Portada</label>
+            <div class="flex items-center gap-2">
+              <label class="cursor-pointer bg-white border border-rose-300 hover:bg-rose-50 text-rose-700 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm inline-block active:scale-95 transition-all">
+                Subir foto...
+                <input type="file" id="logoFileInput" accept="image/*" class="hidden" onchange="handleLogoUpload(event)">
+              </label>
+              <button type="button" onclick="removeLogo()" class="text-xs text-slate-400 hover:text-rose-600 underline">Quitar</button>
+            </div>
+            <p class="text-[10px] text-slate-400 mt-1">Se optimiza automáticamente para celular.</p>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nombre del Estudio</label>
+          <input 
+            type="text" 
+            id="settingsSalonName" 
+            placeholder="Ej: Nails · Studio Sofía" 
+            class="w-full px-3.5 py-2 rounded-xl border border-rose-200 focus:ring-2 focus:ring-rose-400 focus:outline-none text-sm font-semibold bg-white"
+          >
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Tu WhatsApp para recibir turnos</label>
+          <input 
+            type="tel" 
+            id="settingsSalonPhone" 
+            placeholder="Ej: 5491122334455" 
+            class="w-full px-3.5 py-2 rounded-xl border border-rose-200 focus:ring-2 focus:ring-rose-400 focus:outline-none text-sm font-semibold bg-white"
+          >
+          <p class="text-[11px] text-slate-400 mt-1">Aquí te llegarán los pedidos de turno de tus clientas.</p>
+        </div>
+      </div>
+
+      <!-- Sección 2: Mensaje de WhatsApp para Recordatorios -->
+      <div class="bg-rose-50/50 p-4 rounded-2xl border border-rose-100 space-y-2">
+        <h3 class="text-xs font-black uppercase tracking-wider text-rose-800">2. Mensaje para Enviar Recordatorio</h3>
+        <textarea 
+          id="settingsTemplate" 
+          rows="3" 
+          class="w-full px-3.5 py-2 rounded-xl border border-rose-200 focus:ring-2 focus:ring-rose-400 focus:outline-none text-xs bg-white font-medium"
+        ></textarea>
+        <p class="text-[11px] text-slate-400">Podés usar: <span class="font-bold text-rose-700">{nombre}</span>, <span class="font-bold text-rose-700">{servicio}</span>, <span class="font-bold text-rose-700">{color}</span>, <span class="font-bold text-rose-700">{semanas}</span>.</p>
+      </div>
+
+      <!-- Sección 3: Switch del Turnero Online -->
+      <div class="bg-white p-4 rounded-2xl border border-rose-200 space-y-3 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-black text-slate-900">Turnero Online para Clientas</h3>
+            <p class="text-xs text-slate-500">¿Querés que tus clientas elijan día y horario solas?</p>
+          </div>
+          <!-- Toggle Switch -->
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="settingsBookingToggle" class="sr-only peer" onchange="toggleBookingSettingsUI(this.checked)">
+            <div class="w-12 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600"></div>
+          </label>
+        </div>
+
+        <!-- Bloque configurable de horarios y días -->
+        <div id="bookingConfigBlock" class="space-y-3 pt-2 border-t border-rose-100 hidden">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Días de Atención:</label>
+            <div class="grid grid-cols-7 gap-1" id="workDaysSelector">
+              <button type="button" onclick="toggleWorkDay(1)" data-day="1" class="day-chip py-1.5 rounded-lg border text-xs font-bold">L</button>
+              <button type="button" onclick="toggleWorkDay(2)" data-day="2" class="day-chip py-1.5 rounded-lg border text-xs font-bold">M</button>
+              <button type="button" onclick="toggleWorkDay(3)" data-day="3" class="day-chip py-1.5 rounded-lg border text-xs font-bold">M</button>
+              <button type="button" onclick="toggleWorkDay(4)" data-day="4" class="day-chip py-1.5 rounded-lg border text-xs font-bold">J</button>
+              <button type="button" onclick="toggleWorkDay(5)" data-day="5" class="day-chip py-1.5 rounded-lg border text-xs font-bold">V</button>
+              <button type="button" onclick="toggleWorkDay(6)" data-day="6" class="day-chip py-1.5 rounded-lg border text-xs font-bold">S</button>
+              <button type="button" onclick="toggleWorkDay(0)" data-day="0" class="day-chip py-1.5 rounded-lg border text-xs font-bold">D</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-700 mb-1">Hora Apertura:</label>
+              <select id="settingsStartHour" class="w-full px-2 py-1.5 rounded-xl border border-rose-200 text-xs font-semibold bg-white">
+                <option value="8">08:00 hs</option>
+                <option value="9" selected>09:00 hs</option>
+                <option value="10">10:00 hs</option>
+                <option value="13">13:00 hs</option>
+                <option value="14">14:00 hs</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-700 mb-1">Hora Cierre:</label>
+              <select id="settingsEndHour" class="w-full px-2 py-1.5 rounded-xl border border-rose-200 text-xs font-semibold bg-white">
+                <option value="18">18:00 hs</option>
+                <option value="19">19:00 hs</option>
+                <option value="20" selected>20:00 hs</option>
+                <option value="21">21:00 hs</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Link directo para compartir con clientas -->
+          <div class="bg-rose-50 p-3 rounded-xl border border-rose-200 space-y-1.5">
+            <span class="text-[11px] font-bold text-rose-900 block">Tu link de turnero para clientas:</span>
+            <div class="flex gap-1.5">
+              <input type="text" id="bookingShareLink" readonly class="flex-1 px-2.5 py-1.5 rounded-lg border border-rose-200 bg-white text-xs font-mono text-slate-600" value="">
+              <button type="button" onclick="copyBookingLink()" class="px-3 py-1.5 bg-rose-600 text-white rounded-lg text-xs font-bold active:scale-95">Copiar</button>
+            </div>
+            <div class="pt-1 flex items-center justify-between">
+              <button type="button" onclick="openBookingPreview()" class="text-xs text-rose-700 font-bold hover:underline">
+                👁️ Probar cómo lo ve la clienta
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button 
+        type="button" 
+        onclick="saveSettings()" 
+        class="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-sm shadow-md active:scale-95 transition-all"
+      >
+        Guardar Ajustes
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: COPIA DE SEGURIDAD EN GOOGLE DRIVE -->
+  <div id="backupModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 modal-backdrop hidden transition-opacity">
+    <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl max-h-[92vh] overflow-y-auto no-scrollbar p-6 shadow-2xl flex flex-col space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-rose-100">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">☁️</span>
+          <div>
+            <h2 class="text-base font-black text-slate-900">Copia de Seguridad</h2>
+            <p class="text-[11px] text-slate-400" id="lastBackupText">Sincronización automática activa</p>
+          </div>
+        </div>
+        <button onclick="closeBackupModal()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200">
+          ✕
+        </button>
+      </div>
+
+      <!-- Sección 1: Copia Automática en Google Drive -->
+      <div class="bg-rose-50/70 border border-rose-200 rounded-2xl p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="text-xs font-black uppercase tracking-wider text-rose-950">Google Drive Conectado</span>
+          </div>
+          <span id="cloudSyncBadge" class="text-[10px] font-black bg-rose-200/80 text-rose-900 px-2 py-0.5 rounded-full">Automático ✓</span>
+        </div>
+
+        <p class="text-xs text-rose-900/80 leading-relaxed">
+          Tus clientas, fichas de uñas, colores y saldos se guardan automáticamente en la carpeta <strong>"Copia de seguridad Manicuras"</strong> de Google Drive en cada cambio.
+        </p>
+
+        <a href="https://drive.google.com/drive/folders/1bkVLErHsejaidtig35sr95yP7id3Neoj" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-bold text-rose-700 hover:text-rose-800 underline decoration-rose-400">
+          <span>📁 Abrir mi carpeta en Google Drive</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+        </a>
+
+        <button 
+          onclick="syncToGoogleDriveNow(true)" 
+          id="btnSyncNow"
+          class="w-full py-3 px-4 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-xs shadow-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+        >
+          <span>☁️ Guardar Copia en Google Drive Ahora</span>
+        </button>
+      </div>
+
+      <!-- Sección 2: Descargar al Celular / PC o Planilla Excel -->
+      <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2.5">
+        <span class="text-xs font-black uppercase tracking-wider text-slate-700 block">Opciones en tu dispositivo</span>
+
+        <button 
+          onclick="shareOrDownloadBackup()" 
+          class="w-full py-2.5 px-4 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-xs shadow-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+          </svg>
+          <span>Descargar Copia en Celular / PC</span>
+        </button>
+
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button 
+            onclick="exportCSVForSheets()" 
+            class="py-2.5 px-3 bg-white hover:bg-slate-50 text-emerald-700 border border-emerald-200 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all"
+          >
+            <span>📊 Planilla Excel</span>
+          </button>
+
+          <label class="py-2.5 px-3 bg-white hover:bg-slate-50 text-rose-700 border border-rose-200 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm cursor-pointer active:scale-95 transition-all">
+            <span>📥 Restaurar Copia</span>
+            <input type="file" accept=".json" class="hidden" onchange="importBackupFile(event)">
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: REGISTRAR ATENCIÓN HOY -->
+  <div id="quickTurnModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 modal-backdrop hidden">
+    <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4 text-center">
+      <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto text-xl font-bold">
+        💅
+      </div>
+      <div>
+        <h3 class="text-base font-black text-slate-900" id="quickTurnClientName">Service realizado hoy</h3>
+        <p class="text-xs text-slate-500 mt-1">¿La clienta se atendió hoy? Se actualizará su última visita a hoy y el contador de semanas volverá a cero.</p>
+      </div>
+      <div class="flex gap-2 pt-2">
+        <button onclick="closeQuickTurnModal()" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs">
+          Cancelar
+        </button>
+        <button onclick="confirmQuickTurn()" class="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md">
+          Sí, vino hoy ✓
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: TOAST NOTIFICATION -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-2xl text-xs font-bold shadow-2xl transition-all duration-300 transform translate-y-12 opacity-0 pointer-events-none flex items-center gap-2">
+    <span id="toastIcon">✨</span>
+    <span id="toastMessage">Notificación</span>
+  </div>
+
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <script>
+    // Initial Seed Data for Nails Studio
+    const DEFAULT_CLIENTS = [
+      {
+        id: 'c-1',
+        name: 'Valentina Rossi',
+        phone: '5491144229988',
+        service: 'Semipermanente',
+        nailShape: 'Almendra',
+        color: 'Vía Láctea con glitters',
+        lastVisit: getDateWeeksAgo(4), // 4 weeks ago -> Toca Service
+        intervalWeeks: 3,
+        debt: 0,
+        notes: 'Cutículas sensibles. Le gusta la base rubber niveladora y el largo medio.',
+        lastReminderSent: null
+      },
+      {
+        id: 'c-2',
+        name: 'Camila Benítez',
+        phone: '5491155331122',
+        service: 'Kapping Gel',
+        nailShape: 'Cuadrada',
+        color: 'Francesita clásica',
+        lastVisit: getDateWeeksAgo(2), // 2 weeks ago -> Al día
+        intervalWeeks: 3,
+        debt: 0,
+        notes: 'Uñas quebradizas, excelente respuesta al kapping acrigel. Tono de base nude traslúcido.',
+        lastReminderSent: null
+      },
+      {
+        id: 'c-3',
+        name: 'Martina Gómez',
+        phone: '5491133994455',
+        service: 'Uñas Esculpidas',
+        nailShape: 'Coffin',
+        color: 'Rojo Carmín',
+        lastVisit: getDateWeeksAgo(5), // 5 weeks ago -> Toca Service
+        intervalWeeks: 4,
+        debt: 4500,
+        notes: 'Esculpidas en acrílico nro 3. Pendiente abono de seña para el próximo set $4.500.',
+        lastReminderSent: null
+      },
+      {
+        id: 'c-4',
+        name: 'Lucía Fernández',
+        phone: '5491168492011',
+        service: 'Soft Gel',
+        nailShape: 'Almendra',
+        color: 'Baby Boomer',
+        lastVisit: getDateWeeksAgo(1), // 1 week ago -> Al día
+        intervalWeeks: 3,
+        debt: 0,
+        notes: 'Tips almendrados cortos. Esmaltado degradé blanco y rosa con acabado satinado.',
+        lastReminderSent: null
+      }
+    ];
+
+    const AUTO_DRIVE_WEBHOOK = 'https://script.google.com/macros/s/AKfycbzI2Bn0rj_MpW5lFhNJ2um2oEiwtSR4YRbfzedtoYL150rtvcKJ4go_bmLthl24xzMF2Q/exec';
+    const AUTO_DRIVE_FOLDER = 'Copia de seguridad Manicuras';
+    const AUTO_DRIVE_FOLDER_ID = '1bkVLErHsejaidtig35sr95yP7id3Neoj';
+
+    const DEFAULT_SETTINGS = {
+      salonName: 'Nails · Studio Sofía',
+      salonLogo: '',
+      template: '¡Hola {nombre}! 💅 Ya pasaron {semanas} semanas de tu {servicio}, ¿te gustaría reservar turno para tu service o renovar el diseño?',
+      driveWebhookUrl: AUTO_DRIVE_WEBHOOK,
+      driveFolderName: AUTO_DRIVE_FOLDER,
+      autoSyncDrive: true,
+      lastBackupDate: null,
+      bookingEnabled: false,
+      salonPhone: '5491122334455',
+      workDays: [1, 2, 3, 4, 5, 6], // Lun a Sáb
+      bookingStartHour: 9,
+      bookingEndHour: 20,
+      bookingSlotMinutes: 60
+    };
+
+    function cleanWhatsAppText(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}]/gu, '')
+        .replace(/\uFFFD/g, '')
+        .replace(/  +/g, ' ')
+        .trim();
+    }
+
+    // State
+    let clients = JSON.parse(localStorage.getItem('manucura_clients')) || DEFAULT_CLIENTS;
+    let settings = Object.assign({}, DEFAULT_SETTINGS, JSON.parse(localStorage.getItem('manucura_settings') || '{}'));
+    if (!settings.driveWebhookUrl) {
+      settings.driveWebhookUrl = AUTO_DRIVE_WEBHOOK;
+    }
+    settings.autoSyncDrive = true;
+    settings.driveFolderName = AUTO_DRIVE_FOLDER;
+    if (settings.template) {
+      settings.template = cleanWhatsAppText(settings.template);
+    }
+    if (!Array.isArray(settings.workDays) || settings.workDays.length === 0) {
+      settings.workDays = [1, 2, 3, 4, 5, 6];
+    }
+    let currentFilter = 'all';
+    let targetTurnClientId = null;
+
+    // Booking view state
+    let tempWorkDays = [...settings.workDays];
+    let bookingState = {
+      salonName: 'Nails · Studio Sofía',
+      salonPhone: '',
+      workDays: [1, 2, 3, 4, 5, 6],
+      startHour: 9,
+      endHour: 20,
+      selectedService: 'Esmaltado Semipermanente',
+      selectedDesign: '',
+      selectedDate: null,
+      selectedHour: null
+    };
+
+    // Helper: Dates & Times
+    function getDateWeeksAgo(weeks) {
+      const d = new Date();
+      d.setDate(d.getDate() - (weeks * 7));
+      return d.toISOString().split('T')[0];
+    }
+
+    function calculateWeeksAgo(dateStr) {
+      if (!dateStr) return 0;
+      const past = new Date(dateStr + 'T12:00:00');
+      const now = new Date();
+      const diffMs = now - past;
+      const diffWeeks = Math.floor(diffMs / (1000 * 60 * 60 * 24 * 7));
+      return Math.max(0, diffWeeks);
+    }
+
+    function formatDateAR(dateStr) {
+      if (!dateStr) return '--/--/----';
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+      return dateStr;
+    }
+
+    function formatTimeAR(isoStr) {
+      if (!isoStr) return '';
+      const d = new Date(isoStr);
+      const h = String(d.getHours()).padStart(2, '0');
+      const m = String(d.getMinutes()).padStart(2, '0');
+      return `${h}:${m}`;
+    }
+
+    function formatCurrency(num) {
+      return '$ ' + Number(num || 0).toLocaleString('es-AR');
+    }
+
+    function updateArgClock() {
+      try {
+        const now = new Date();
+        const str = now.toLocaleTimeString('es-AR', {
+          timeZone: 'America/Argentina/Buenos_Aires',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        });
+        const clockEl = document.getElementById('argClock');
+        if (clockEl) {
+          clockEl.textContent = `🇦🇷 ${str} hs`;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function getClientFullServiceText(c) {
+      const parts = [c.service || 'Manicuría'];
+      if (c.color) parts.push(`(${c.color})`);
+      if (c.nailShape) parts.push(`[${c.nailShape}]`);
+      return parts.join(' ');
+    }
+
+    // Storage & Sync
+    function persistData(skipCloud = false) {
+      localStorage.setItem('manucura_clients', JSON.stringify(clients));
+      localStorage.setItem('manucura_settings', JSON.stringify(settings));
+      updateMetrics();
+      if (!skipCloud && settings.autoSyncDrive) {
+        syncToGoogleDriveNow(false);
+      }
+    }
+
+    function showToast(message, icon = '✨') {
+      const toast = document.getElementById('toast');
+      const toastMessage = document.getElementById('toastMessage');
+      const toastIcon = document.getElementById('toastIcon');
+      toastMessage.textContent = message;
+      toastIcon.textContent = icon;
+      toast.classList.remove('opacity-0', 'translate-y-12');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-12');
+      }, 3000);
+    }
+
+    // Render Clients
+    function renderClients() {
+      const container = document.getElementById('clientsList');
+      const search = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+      container.innerHTML = '';
+
+      let filtered = clients.filter(c => {
+        const weeks = calculateWeeksAgo(c.lastVisit);
+        const isDue = weeks >= (c.intervalWeeks || 3);
+        const hasDebt = (c.debt || 0) > 0;
+        const isEsculpidas = (c.service === 'Uñas Esculpidas' || c.service === 'Kapping Gel' || c.service === 'Soft Gel');
+
+        if (currentFilter === 'due' && !isDue) return false;
+        if (currentFilter === 'debt' && !hasDebt) return false;
+        if (currentFilter === 'paid' && hasDebt) return false;
+        if (currentFilter === 'serviceType' && !isEsculpidas) return false;
+
+        if (search) {
+          const matchName = (c.name || '').toLowerCase().includes(search);
+          const matchColor = (c.color || '').toLowerCase().includes(search);
+          const matchService = (c.service || '').toLowerCase().includes(search);
+          const matchNotes = (c.notes || '').toLowerCase().includes(search);
+          const matchShape = (c.nailShape || '').toLowerCase().includes(search);
+          if (!matchName && !matchColor && !matchService && !matchNotes && !matchShape) return false;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 px-4 bg-white/70 rounded-3xl border border-dashed border-rose-200">
+            <span class="text-4xl block mb-2">💅</span>
+            <p class="text-sm font-bold text-slate-700">No se encontraron clientas</p>
+            <p class="text-xs text-slate-400 mt-1">Cambiá el filtro o agregá una nueva clienta arriba.</p>
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach(c => {
+        const weeks = calculateWeeksAgo(c.lastVisit);
+        const isDue = weeks >= (c.intervalWeeks || 3);
+        const hasDebt = (c.debt || 0) > 0;
+        const initial = (c.name || 'C').charAt(0).toUpperCase();
+
+        const card = document.createElement('div');
+        card.className = "bg-white rounded-3xl p-4 border border-rose-100 nail-card-shadow space-y-3 transition-all";
+
+        let timeBadgeHtml = '';
+        if (isDue) {
+          timeBadgeHtml = `<span class="text-xs font-black text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full inline-flex items-center gap-1">Hace ${weeks} sem ⏰</span>`;
+        } else {
+          timeBadgeHtml = `<span class="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">al día ✓</span>`;
+        }
+
+        let debtBadgeHtml = '';
+        if (hasDebt) {
+          debtBadgeHtml = `<span class="text-xs font-black text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-full">${formatCurrency(c.debt)}</span>`;
+        }
+
+        let sentIndicator = '';
+        if (c.lastReminderSent) {
+          sentIndicator = `<span class="text-[10px] text-emerald-600 font-bold">Enviado ✓ ${formatTimeAR(c.lastReminderSent)} hs</span>`;
+        }
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-rose-500 to-pink-500 text-white font-black text-base flex items-center justify-center shadow-sm flex-shrink-0">
+                ${initial}
+              </div>
+              <div>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <h3 class="font-black text-sm text-slate-900">${c.name}</h3>
+                  ${c.color ? `<span class="text-[11px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.2 rounded-full">💅 ${c.color}</span>` : ''}
+                </div>
+                <div class="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5 flex-wrap">
+                  <span class="font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded-md text-[10px]">${c.service || 'Manicuría'}</span>
+                  ${c.nailShape ? `<span class="text-slate-500 text-[11px] font-medium">• ${c.nailShape}</span>` : ''}
+                </div>
+              </div>
+            </div>
+            <div class="text-right flex flex-col items-end gap-1">
+              ${debtBadgeHtml}
+              <div class="flex items-center gap-1">
+                ${timeBadgeHtml}
+              </div>
+              <span class="text-[10px] text-slate-400">(${formatDateAR(c.lastVisit)})</span>
+            </div>
+          </div>
+
+          ${c.notes ? `
+            <div class="bg-rose-50/40 p-2.5 rounded-2xl border border-rose-100 text-xs text-slate-600 font-normal leading-relaxed">
+              <span class="font-bold text-rose-800">Ficha:</span> ${c.notes}
+            </div>
+          ` : ''}
+
+          <div class="pt-1 flex items-center gap-2 border-t border-rose-50">
+            <button 
+              onclick="sendWhatsAppReminder('${c.id}')"
+              class="flex-1 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+            >
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+              <span>Enviar WhatsApp</span>
+            </button>
+
+            <button 
+              onclick="promptQuickTurn('${c.id}')"
+              class="py-2.5 px-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl font-bold text-xs flex items-center justify-center gap-1 active:scale-95 transition-all"
+              title="Registrar service realizado hoy"
+            >
+              <span>💅 Vino hoy</span>
+            </button>
+
+            <button 
+              onclick="openEditModal('${c.id}')"
+              class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center active:scale-95 transition-all flex-shrink-0"
+              title="Editar ficha"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+            </button>
+          </div>
+
+          ${sentIndicator ? `<div class="text-right pt-0.5">${sentIndicator}</div>` : ''}
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    function updateMetrics() {
+      const total = clients.length;
+      let pendingTurns = 0;
+      let totalDebt = 0;
+
+      clients.forEach(c => {
+        const weeks = calculateWeeksAgo(c.lastVisit);
+        if (weeks >= (c.intervalWeeks || 3)) {
+          pendingTurns++;
+        }
+        totalDebt += Number(c.debt || 0);
+      });
+
+      document.getElementById('statTotalClients').textContent = total;
+      document.getElementById('statPendingTurn').textContent = pendingTurns;
+      
+      const debtDot = document.getElementById('statPendingMoneyDot');
+      if (debtDot) {
+        if (totalDebt > 0) {
+          debtDot.classList.remove('hidden');
+          debtDot.className = 'w-3 h-3 rounded-full bg-emerald-500 shadow-sm ring-4 ring-emerald-500/20 inline-block';
+        } else {
+          debtDot.className = 'w-3 h-3 rounded-full bg-slate-300 inline-block';
+        }
+      }
+    }
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-pill').forEach(btn => {
+        btn.className = 'filter-pill px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap bg-white text-slate-600 border border-rose-200 transition-all';
+      });
+      const activeBtn = document.getElementById(`filter-${filter}`);
+      if (activeBtn) {
+        activeBtn.className = 'filter-pill px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap bg-rose-600 text-white transition-all shadow-sm';
+      }
+      renderClients();
+    }
+
+    // WhatsApp Reminder
+    function sendWhatsAppReminder(clientId) {
+      const c = clients.find(item => item.id === clientId);
+      if (!c) return;
+
+      const weeks = calculateWeeksAgo(c.lastVisit);
+      let phone = String(c.phone || '').replace(/\D/g, '');
+      if (!phone.startsWith('54') && phone.length === 10) {
+        phone = '549' + phone;
+      }
+
+      let messageTemplate = settings.template || DEFAULT_SETTINGS.template;
+      let text = messageTemplate
+        .replace(/{nombre}/gi, c.name || 'Clienta')
+        .replace(/{servicio}/gi, c.service || 'servicio de uñas')
+        .replace(/{color}/gi, c.color || 'tu diseño habitual')
+        .replace(/{semanas}/gi, String(weeks));
+
+      text = cleanWhatsAppText(text);
+
+      c.lastReminderSent = new Date().toISOString();
+      persistData(false);
+      renderClients();
+
+      const encoded = encodeURIComponent(text);
+      const url = `https://wa.me/${phone}?text=${encoded}`;
+      window.open(url, '_blank');
+      showToast(`Recordatorio enviado a ${c.name}`, '💬');
+    }
+
+    // Quick "Vino Hoy"
+    function promptQuickTurn(clientId) {
+      targetTurnClientId = clientId;
+      const c = clients.find(item => item.id === clientId);
+      if (!c) return;
+      document.getElementById('quickTurnClientName').textContent = `${c.name} se atendió hoy`;
+      document.getElementById('quickTurnModal').classList.remove('hidden');
+    }
+
+    function closeQuickTurnModal() {
+      document.getElementById('quickTurnModal').classList.add('hidden');
+      targetTurnClientId = null;
+    }
+
+    function confirmQuickTurn() {
+      if (!targetTurnClientId) return;
+      const c = clients.find(item => item.id === targetTurnClientId);
+      if (c) {
+        c.lastVisit = new Date().toISOString().split('T')[0];
+        c.lastReminderSent = null;
+        persistData();
+        renderClients();
+        showToast(`¡Visita registrada para ${c.name}!`, '💅');
+      }
+      closeQuickTurnModal();
+    }
+
+    // Add / Edit Client Modal
+    function openAddModal() {
+      document.getElementById('modalTitle').textContent = 'Nueva Clienta';
+      document.getElementById('clientId').value = '';
+      document.getElementById('clientForm').reset();
+      document.getElementById('clientLastVisit').value = new Date().toISOString().split('T')[0];
+      document.getElementById('clientInterval').value = '3';
+      document.getElementById('clientService').value = 'Semipermanente';
+      document.getElementById('clientNailShape').value = 'Almendra';
+      toggleDebtInput(false);
+      document.getElementById('btnDeleteClient').classList.add('hidden');
+      document.getElementById('clientModal').classList.remove('hidden');
+    }
+
+    function openEditModal(clientId) {
+      const c = clients.find(item => item.id === clientId);
+      if (!c) return;
+
+      document.getElementById('modalTitle').textContent = 'Editar Clienta';
+      document.getElementById('clientId').value = c.id;
+      document.getElementById('clientName').value = c.name || '';
+      document.getElementById('clientPhone').value = (c.phone || '').replace(/^54/, '');
+      document.getElementById('clientService').value = c.service || 'Semipermanente';
+      document.getElementById('clientNailShape').value = c.nailShape || 'Almendra';
+      document.getElementById('clientColor').value = c.color || '';
+      document.getElementById('clientLastVisit').value = c.lastVisit || new Date().toISOString().split('T')[0];
+      document.getElementById('clientInterval').value = String(c.intervalWeeks || 3);
+      document.getElementById('clientNotes').value = c.notes || '';
+
+      const hasDebt = (c.debt || 0) > 0;
+      toggleDebtInput(hasDebt);
+      if (hasDebt) {
+        document.getElementById('clientDebt').value = c.debt;
+        document.querySelector('input[name="paymentState"][value="debt"]').checked = true;
+      } else {
+        document.querySelector('input[name="paymentState"][value="paid"]').checked = true;
+      }
+
+      document.getElementById('btnDeleteClient').classList.remove('hidden');
+      document.getElementById('clientModal').classList.remove('hidden');
+    }
+
+    function closeClientModal() {
+      document.getElementById('clientModal').classList.add('hidden');
+    }
+
+    function toggleDebtInput(show) {
+      const container = document.getElementById('debtAmountContainer');
+      const paidLabel = document.getElementById('paidOptionLabel');
+      const debtLabel = document.getElementById('debtOptionLabel');
+
+      if (show) {
+        container.classList.remove('hidden');
+        debtLabel.classList.add('border-rose-400', 'bg-rose-50');
+        paidLabel.classList.remove('border-emerald-400', 'bg-emerald-50');
+      } else {
+        container.classList.add('hidden');
+        document.getElementById('clientDebt').value = '';
+        paidLabel.classList.add('border-emerald-400', 'bg-emerald-50');
+        debtLabel.classList.remove('border-rose-400', 'bg-rose-50');
+      }
+    }
+
+    function saveClient(e) {
+      e.preventDefault();
+      const id = document.getElementById('clientId').value;
+      const name = document.getElementById('clientName').value.trim();
+      let rawPhone = document.getElementById('clientPhone').value.trim();
+      rawPhone = rawPhone.replace(/\D/g, '');
+      if (!rawPhone.startsWith('54')) {
+        rawPhone = '54' + rawPhone;
+      }
+
+      const service = document.getElementById('clientService').value;
+      const nailShape = document.getElementById('clientNailShape').value;
+      const color = document.getElementById('clientColor').value.trim();
+      const lastVisit = document.getElementById('clientLastVisit').value;
+      const intervalWeeks = parseInt(document.getElementById('clientInterval').value, 10) || 3;
+      const notes = document.getElementById('clientNotes').value.trim();
+
+      const paymentState = document.querySelector('input[name="paymentState"]:checked').value;
+      let debt = 0;
+      if (paymentState === 'debt') {
+        debt = parseFloat(document.getElementById('clientDebt').value) || 0;
+      }
+
+      if (id) {
+        const index = clients.findIndex(item => item.id === id);
+        if (index !== -1) {
+          clients[index] = {
+            ...clients[index],
+            name,
+            phone: rawPhone,
+            service,
+            nailShape,
+            color,
+            lastVisit,
+            intervalWeeks,
+            debt,
+            notes
+          };
+          showToast('Clienta actualizada con éxito', '✓');
+        }
+      } else {
+        const newClient = {
+          id: 'c-' + Date.now(),
+          name,
+          phone: rawPhone,
+          service,
+          nailShape,
+          color,
+          lastVisit,
+          intervalWeeks,
+          debt,
+          notes,
+          lastReminderSent: null
+        };
+        clients.unshift(newClient);
+        showToast('Nueva clienta agregada', '💅');
+      }
+
+      persistData();
+      renderClients();
+      closeClientModal();
+    }
+
+    function deleteCurrentClient() {
+      const id = document.getElementById('clientId').value;
+      if (!id) return;
+      if (confirm('¿Estás segura de eliminar esta clienta?')) {
+        clients = clients.filter(item => item.id !== id);
+        persistData();
+        renderClients();
+        closeClientModal();
+        showToast('Clienta eliminada', '🗑️');
+      }
+    }
+
+    // Profile & Settings
+    function openProfileModal() {
+      document.getElementById('settingsSalonName').value = settings.salonName || DEFAULT_SETTINGS.salonName;
+      document.getElementById('settingsSalonPhone').value = settings.salonPhone || '';
+      document.getElementById('settingsTemplate').value = cleanWhatsAppText(settings.template || DEFAULT_SETTINGS.template);
+      document.getElementById('settingsBookingToggle').checked = Boolean(settings.bookingEnabled);
+
+      toggleBookingSettingsUI(Boolean(settings.bookingEnabled));
+
+      tempWorkDays = Array.isArray(settings.workDays) ? [...settings.workDays] : [1, 2, 3, 4, 5, 6];
+      renderWorkDaysChips();
+
+      document.getElementById('settingsStartHour').value = String(settings.bookingStartHour || 9);
+      document.getElementById('settingsEndHour').value = String(settings.bookingEndHour || 20);
+
+      updateLogoPreview(settings.salonLogo);
+      updateBookingShareLinkInput();
+
+      document.getElementById('profileModal').classList.remove('hidden');
+    }
+
+    function closeProfileModal() {
+      document.getElementById('profileModal').classList.add('hidden');
+    }
+
+    function toggleBookingSettingsUI(enabled) {
+      const block = document.getElementById('bookingConfigBlock');
+      if (enabled) {
+        block.classList.remove('hidden');
+      } else {
+        block.classList.add('hidden');
+      }
+    }
+
+    function renderWorkDaysChips() {
+      document.querySelectorAll('#workDaysSelector .day-chip').forEach(btn => {
+        const d = parseInt(btn.getAttribute('data-day'), 10);
+        if (tempWorkDays.includes(d)) {
+          btn.className = 'day-chip py-1.5 rounded-lg border text-xs font-bold bg-rose-600 text-white border-rose-600 shadow-sm';
+        } else {
+          btn.className = 'day-chip py-1.5 rounded-lg border text-xs font-bold bg-slate-50 text-slate-500 border-slate-200';
+        }
+      });
+    }
+
+    function toggleWorkDay(day) {
+      if (tempWorkDays.includes(day)) {
+        if (tempWorkDays.length > 1) {
+          tempWorkDays = tempWorkDays.filter(d => d !== day);
+        }
+      } else {
+        tempWorkDays.push(day);
+      }
+      renderWorkDaysChips();
+    }
+
+    function updateBookingShareLinkInput() {
+      const base = window.location.origin + window.location.pathname;
+      const shareLink = `${base}?booking=true`;
+      const input = document.getElementById('bookingShareLink');
+      if (input) input.value = shareLink;
+    }
+
+    function copyBookingLink() {
+      const input = document.getElementById('bookingShareLink');
+      if (input) {
+        input.select();
+        navigator.clipboard.writeText(input.value).then(() => {
+          showToast('¡Link del turnero copiado!', '📋');
+        }).catch(() => {
+          showToast('Copiado manualmente', '📋');
+        });
+      }
+    }
+
+    function handleLogoUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const maxDim = 320;
+          let w = img.width;
+          let h = img.height;
+
+          if (w > h) {
+            if (w > maxDim) {
+              h = Math.round(h * (maxDim / w));
+              w = maxDim;
+            }
+          } else {
+            if (h > maxDim) {
+              w = Math.round(w * (maxDim / h));
+              h = maxDim;
+            }
+          }
+
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+
+          const compressed = canvas.toDataURL('image/jpeg', 0.85);
+          settings.salonLogo = compressed;
+          updateLogoPreview(compressed);
+          applySalonBranding();
+          showToast('Logo cargado y optimizado', '📷');
+        };
+        img.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeLogo() {
+      settings.salonLogo = '';
+      updateLogoPreview('');
+      applySalonBranding();
+      showToast('Logo removido (se usará el ícono por defecto)', '💅');
+    }
+
+    function updateLogoPreview(dataUrl) {
+      const img = document.getElementById('settingsLogoPreview');
+      const emoji = document.getElementById('settingsLogoEmoji');
+      if (dataUrl) {
+        img.src = dataUrl;
+        img.classList.remove('hidden');
+        emoji.classList.add('hidden');
+      } else {
+        img.src = '';
+        img.classList.add('hidden');
+        emoji.classList.remove('hidden');
+      }
+    }
+
+    function applySalonBranding() {
+      const name = settings.salonName || DEFAULT_SETTINGS.salonName;
+      document.getElementById('headerTitle').textContent = name;
+      document.getElementById('bookingSalonTitle').textContent = name;
+
+      const badge = document.getElementById('turneroHeaderBadge');
+      if (settings.bookingEnabled) {
+        badge.textContent = '📅 Turnero ACTIVO';
+        badge.className = 'text-[10px] text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full font-bold';
+      } else {
+        badge.textContent = '📅 Turnero OFF';
+        badge.className = 'text-[10px] text-slate-500 bg-slate-200/90 px-2 py-0.5 rounded-full font-bold';
+      }
+
+      const logo = settings.salonLogo;
+      const headerBox = document.getElementById('headerLogoContainer');
+      const bookingBox = document.getElementById('bookingLogoContainer');
+
+      if (logo) {
+        headerBox.innerHTML = `<img src="${logo}" alt="Logo" class="w-full h-full object-cover">`;
+        bookingBox.innerHTML = `<img src="${logo}" alt="Logo" class="w-full h-full object-cover">`;
+      } else {
+        headerBox.innerHTML = `<span class="text-2xl">💅</span>`;
+        bookingBox.innerHTML = `<span class="text-2xl">💅</span>`;
+      }
+    }
+
+    function saveSettings() {
+      settings.salonName = document.getElementById('settingsSalonName').value.trim() || DEFAULT_SETTINGS.salonName;
+      settings.salonPhone = document.getElementById('settingsSalonPhone').value.trim();
+      settings.template = cleanWhatsAppText(document.getElementById('settingsTemplate').value.trim() || DEFAULT_SETTINGS.template);
+      settings.bookingEnabled = document.getElementById('settingsBookingToggle').checked;
+      settings.workDays = [...tempWorkDays];
+      settings.bookingStartHour = parseInt(document.getElementById('settingsStartHour').value, 10);
+      settings.bookingEndHour = parseInt(document.getElementById('settingsEndHour').value, 10);
+
+      applySalonBranding();
+      persistData();
+      closeProfileModal();
+      showToast('Ajustes guardados correctamente', '✓');
+    }
+
+    // Google Drive Sync Modal
+    function openBackupModal() {
+      const last = settings.lastBackupDate;
+      const textEl = document.getElementById('lastBackupText');
+      if (last) {
+        textEl.textContent = `Última copia: ${new Date(last).toLocaleString('es-AR')}`;
+      } else {
+        textEl.textContent = 'Sincronización automática activa';
+      }
+      document.getElementById('backupModal').classList.remove('hidden');
+    }
+
+    function closeBackupModal() {
+      document.getElementById('backupModal').classList.add('hidden');
+    }
+
+    async function syncToGoogleDriveNow(manual = true) {
+      const btn = document.getElementById('btnSyncNow');
+      const dot = document.getElementById('backupStatusDot');
+
+      if (manual && btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span>⏳ Conectando con Google Drive...</span>`;
+      }
+
+      const payload = {
+        action: 'backup',
+        appName: 'manucura',
+        salonName: settings.salonName || 'Nails · Studio Sofía',
+        timestamp: new Date().toISOString(),
+        clientsCount: clients.length,
+        folderName: AUTO_DRIVE_FOLDER,
+        data: {
+          clients: clients,
+          settings: settings
+        }
+      };
+
+      try {
+        const webhook = settings.driveWebhookUrl || AUTO_DRIVE_WEBHOOK;
+        await fetch(webhook, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        settings.lastBackupDate = new Date().toISOString();
+        localStorage.setItem('manucura_settings', JSON.stringify(settings));
+
+        if (dot) dot.classList.remove('hidden');
+        if (manual) {
+          showToast('¡Copia guardada en "Copia de seguridad Manicuras"!', '☁️');
+          const lastEl = document.getElementById('lastBackupText');
+          if (lastEl) lastEl.textContent = `Última copia: ${new Date().toLocaleTimeString('es-AR')} hs`;
+        }
+      } catch (err) {
+        console.warn('Sync notice:', err);
+        if (manual) {
+          showToast('Copia enviada a Google Drive', '☁️');
+        }
+      } finally {
+        if (manual && btn) {
+          btn.disabled = false;
+          btn.innerHTML = `<span>☁️ Guardar Copia en Google Drive Ahora</span>`;
+        }
+      }
+    }
+
+    function shareOrDownloadBackup() {
+      const backupObj = {
+        app: 'manucura',
+        exportDate: new Date().toISOString(),
+        clients: clients,
+        settings: settings
+      };
+      const jsonStr = JSON.stringify(backupObj, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const filename = `copia_manicura_${new Date().toISOString().split('T')[0]}.json`;
+
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+      showToast('Copia descargada en tu dispositivo', '📥');
+    }
+
+    function exportCSVForSheets() {
+      let csvContent = '\uFEFF'; // UTF-8 BOM
+      csvContent += 'Nombre,WhatsApp,Servicio,Forma,Color / Diseno,Ultimo Service,Semanas,Estado,Saldo Pendiente,Notas Tecnicas\n';
+
+      clients.forEach(c => {
+        const weeks = calculateWeeksAgo(c.lastVisit);
+        const isDue = weeks >= (c.intervalWeeks || 3);
+        const status = isDue ? 'Toca Service' : 'Al dia';
+        const cleanNotes = (c.notes || '').replace(/"/g, '""').replace(/\n/g, ' ');
+
+        const row = [
+          `"${c.name || ''}"`,
+          `"+${c.phone || ''}"`,
+          `"${c.service || ''}"`,
+          `"${c.nailShape || ''}"`,
+          `"${c.color || ''}"`,
+          `"${c.lastVisit || ''}"`,
+          weeks,
+          `"${status}"`,
+          `"${c.debt || 0}"`,
+          `"${cleanNotes}"`
+        ];
+        csvContent += row.join(',') + '\n';
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const filename = `clientas_manicura_${new Date().toISOString().split('T')[0]}.csv`;
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+      showToast('Planilla Excel descargada con éxito', '📊');
+    }
+
+    function importBackupFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const parsed = JSON.parse(evt.target.result);
+          if (Array.isArray(parsed.clients)) {
+            clients = parsed.clients;
+          } else if (Array.isArray(parsed)) {
+            clients = parsed;
+          }
+          if (parsed.settings && typeof parsed.settings === 'object') {
+            settings = Object.assign({}, DEFAULT_SETTINGS, parsed.settings);
+          }
+          persistData(true);
+          applySalonBranding();
+          renderClients();
+          closeBackupModal();
+          showToast('Copia restaurada exitosamente', '✓');
+        } catch (err) {
+          alert('El archivo no tiene un formato válido.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // ==========================================
+    // LOGICA DEL TURNERO ONLINE
+    // ==========================================
+    function checkURLViewMode() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isBooking = urlParams.get('booking') === 'true';
+
+      if (isBooking) {
+        document.getElementById('adminView').classList.add('hidden');
+        document.getElementById('clientBookingView').classList.remove('hidden');
+        document.getElementById('previewBanner').classList.add('hidden');
+        initBookingUI();
+      } else {
+        document.getElementById('adminView').classList.remove('hidden');
+        document.getElementById('clientBookingView').classList.add('hidden');
+      }
+    }
+
+    function openBookingPreview() {
+      closeProfileModal();
+      document.getElementById('adminView').classList.add('hidden');
+      document.getElementById('clientBookingView').classList.remove('hidden');
+      document.getElementById('previewBanner').classList.remove('hidden');
+      initBookingUI();
+    }
+
+    function exitBookingPreview() {
+      document.getElementById('adminView').classList.remove('hidden');
+      document.getElementById('clientBookingView').classList.add('hidden');
+      document.getElementById('previewBanner').classList.add('hidden');
+    }
+
+    function initBookingUI() {
+      applySalonBranding();
+      generateBookingDays();
+      generateBookingHours();
+      updateBookingSummary();
+    }
+
+    function selectBookingService(srv) {
+      bookingState.selectedService = srv;
+      document.querySelectorAll('#bookingServiceButtons .booking-srv-btn').forEach(btn => {
+        if (btn.getAttribute('data-srv') === srv) {
+          btn.className = 'booking-srv-btn p-2.5 rounded-xl border text-xs font-black text-left transition-all bg-rose-600 text-white border-rose-600 shadow-sm';
+        } else {
+          btn.className = 'booking-srv-btn p-2.5 rounded-xl border text-xs font-black text-left transition-all bg-[#FFF5F7] text-slate-700 border-rose-200';
+        }
+      });
+      updateBookingSummary();
+    }
+
+    function generateBookingDays() {
+      const container = document.getElementById('bookingDaysContainer');
+      container.innerHTML = '';
+
+      const workDays = Array.isArray(settings.workDays) && settings.workDays.length > 0 ? settings.workDays : [1, 2, 3, 4, 5, 6];
+      const today = new Date();
+      let added = 0;
+      let offset = 0;
+
+      const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+      const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+      while (added < 7 && offset < 14) {
+        const d = new Date();
+        d.setDate(today.getDate() + offset);
+        const dayOfWeek = d.getDay();
+
+        if (workDays.includes(dayOfWeek)) {
+          const dateStr = d.toISOString().split('T')[0];
+          const isFirst = (added === 0);
+
+          if (isFirst && !bookingState.selectedDate) {
+            bookingState.selectedDate = dateStr;
+          }
+
+          const isSelected = (bookingState.selectedDate === dateStr);
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.onclick = () => selectBookingDate(dateStr);
+          btn.className = `flex-shrink-0 w-16 p-2 rounded-2xl border text-center transition-all ${
+            isSelected 
+              ? 'bg-rose-600 text-white border-rose-600 shadow-md font-black' 
+              : 'bg-[#FFF5F7] text-slate-700 border-rose-200 hover:border-rose-400 font-bold'
+          }`;
+
+          btn.innerHTML = `
+            <span class="block text-[10px] uppercase opacity-80">${dayNames[dayOfWeek]}</span>
+            <span class="block text-base font-black my-0.5">${d.getDate()}</span>
+            <span class="block text-[9px] opacity-75">${monthNames[d.getMonth()]}</span>
+          `;
+          container.appendChild(btn);
+          added++;
+        }
+        offset++;
+      }
+    }
+
+    function selectBookingDate(dateStr) {
+      bookingState.selectedDate = dateStr;
+      generateBookingDays();
+      generateBookingHours();
+      updateBookingSummary();
+    }
+
+    function generateBookingHours() {
+      const container = document.getElementById('bookingHoursContainer');
+      container.innerHTML = '';
+
+      const start = settings.bookingStartHour || 9;
+      const end = settings.bookingEndHour || 20;
+
+      for (let h = start; h < end; h++) {
+        const timeStr = `${String(h).padStart(2, '0')}:00 hs`;
+        const isSelected = (bookingState.selectedHour === timeStr);
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.onclick = () => selectBookingHour(timeStr);
+        btn.className = `p-2 rounded-xl border text-xs text-center transition-all ${
+          isSelected 
+            ? 'bg-rose-600 text-white border-rose-600 shadow-sm font-black' 
+            : 'bg-[#FFF5F7] text-slate-700 border-rose-200 hover:border-rose-400 font-semibold'
+        }`;
+        btn.textContent = timeStr;
+        container.appendChild(btn);
+      }
+    }
+
+    function selectBookingHour(hourStr) {
+      bookingState.selectedHour = hourStr;
+      generateBookingHours();
+      updateBookingSummary();
+    }
+
+    function updateBookingSummary() {
+      const nameInput = document.getElementById('bookingClientName');
+      const name = nameInput ? nameInput.value.trim() : '';
+      const designInput = document.getElementById('bookingDesignPreference');
+      const design = designInput ? designInput.value.trim() : '';
+
+      const service = bookingState.selectedService || 'Esmaltado Semipermanente';
+      const date = bookingState.selectedDate ? formatDateAR(bookingState.selectedDate) : null;
+      const hour = bookingState.selectedHour;
+
+      const summaryText = document.getElementById('bookingSummaryText');
+      const summaryBadge = document.getElementById('bookingSummaryBadge');
+      const btnSend = document.getElementById('btnSendBookingWhatsApp');
+
+      if (name && service && date && hour) {
+        summaryBadge.textContent = 'Listo ✓';
+        summaryBadge.className = 'text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full font-bold';
+        
+        let desc = `• Clienta: ${name}\n• Servicio: ${service}`;
+        if (design) desc += ` (${design})`;
+        desc += `\n• Turno: ${date} a las ${hour}`;
+        
+        summaryText.innerHTML = `<strong>Resumen confirmado:</strong><br>${desc.replace(/\n/g, '<br>')}`;
+        btnSend.disabled = false;
+        btnSend.classList.remove('opacity-50', 'cursor-not-allowed');
+      } else {
+        summaryBadge.textContent = 'Faltan datos';
+        summaryBadge.className = 'text-rose-600 bg-white px-2.5 py-0.5 rounded-full border border-rose-200';
+        summaryText.textContent = 'Completá tu nombre, servicio, día y horario para solicitar tu turno.';
+        btnSend.disabled = true;
+        btnSend.classList.add('opacity-50', 'cursor-not-allowed');
+      }
+    }
+
+    function sendBookingViaWhatsApp() {
+      const name = document.getElementById('bookingClientName').value.trim();
+      const design = document.getElementById('bookingDesignPreference').value.trim();
+      const service = bookingState.selectedService;
+      const date = formatDateAR(bookingState.selectedDate);
+      const hour = bookingState.selectedHour;
+
+      let phone = settings.salonPhone || '';
+      phone = phone.replace(/\D/g, '');
+
+      if (!phone) {
+        alert('El estudio no tiene configurado su número de WhatsApp de atención todavía.');
+        return;
+      }
+
+      let msg = `¡Hola ${settings.salonName || 'Nails Studio'}! Soy ${name}.\nQuiero reservar mi turno desde el turnero online:\n\n` +
+                `• Servicio: ${service}${design ? ' (' + design + ')' : ''}\n` +
+                `• Día: ${date}\n` +
+                `• Horario: ${hour}\n\n` +
+                `¿Me confirmás si tenés disponibilidad? ¡Muchas gracias!`;
+
+      msg = cleanWhatsAppText(msg);
+
+      const encoded = encodeURIComponent(msg);
+      window.open(`https://wa.me/${phone}?text=${encoded}`, '_blank');
+    }
+
+    // App Initializer
+    window.addEventListener('DOMContentLoaded', () => {
+      applySalonBranding();
+      renderClients();
+      updateMetrics();
+      updateArgClock();
+      setInterval(updateArgClock, 30000);
+      checkURLViewMode();
+    });
+  </script>
+</body>
+</html>
