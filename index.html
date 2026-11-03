@@ -78,6 +78,16 @@
       -webkit-backdrop-filter: blur(5px);
     }
   </style>
+  <!-- QRCode & Confetti Libraries -->
+  <script src="qrcode.min.js"></script>
+  <script>
+    if (typeof QRCode === 'undefined') {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+      document.head.appendChild(s);
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 </head>
 <body class="min-h-screen flex justify-center items-start sm:py-6">
 
@@ -111,6 +121,11 @@
           </div>
 
           <div class="flex items-center gap-2">
+            <!-- QR Cobro Mostrador Button -->
+            <button onclick="openQuickQrModal()" class="h-10 px-3.5 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center gap-1.5 text-rose-700 hover:bg-rose-100 active:scale-95 transition-transform shadow-sm font-bold text-xs" title="Cobro QR en mostrador">
+              <span>📷 QR</span>
+            </button>
+            
             <!-- Google Drive Backup Button -->
             <button onclick="openBackupModal()" class="w-10 h-10 rounded-full bg-white border border-rose-200 flex items-center justify-center text-rose-600 hover:bg-rose-50 active:scale-95 transition-transform shadow-sm relative" title="Copia de seguridad en Google Drive">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -743,6 +758,7 @@
         intervalWeeks: 3,
         debt: 0,
         notes: 'Cutículas sensibles. Le gusta la base rubber niveladora y el largo medio.',
+        stamps: 4,
         lastReminderSent: null
       },
       {
@@ -756,6 +772,7 @@
         intervalWeeks: 3,
         debt: 0,
         notes: 'Uñas quebradizas, excelente respuesta al kapping acrigel. Tono de base nude traslúcido.',
+        stamps: 6,
         lastReminderSent: null
       },
       {
@@ -769,6 +786,7 @@
         intervalWeeks: 4,
         debt: 4500,
         notes: 'Esculpidas en acrílico nro 3. Pendiente abono de seña para el próximo set $4.500.',
+        stamps: 2,
         lastReminderSent: null
       },
       {
@@ -845,6 +863,289 @@
       selectedDate: null,
       selectedHour: null
     };
+
+    
+    // --- ESTÁNDAR GEMINI: FIDELIZACIÓN, COBRO QR Y SERVICIOS EDITABLES ---
+    DEFAULT_SETTINGS.alias = DEFAULT_SETTINGS.alias || 'estudio.nails.mp';
+    DEFAULT_SETTINGS.cbu = DEFAULT_SETTINGS.cbu || '0000003100010002000300';
+    DEFAULT_SETTINGS.titular = DEFAULT_SETTINGS.titular || 'Sofía Martínez';
+    DEFAULT_SETTINGS.targetStamps = DEFAULT_SETTINGS.targetStamps || 6;
+    DEFAULT_SETTINGS.rewardDescription = DEFAULT_SETTINGS.rewardDescription || '1 Service de Semipermanente Gratis';
+
+    const DEFAULT_MANUCURA_SERVICES = [
+      { id: 'srv_1', name: '💅 Esmaltado Semipermanente', price: 6500 },
+      { id: 'srv_2', name: '💎 Kapping Gel', price: 8500 },
+      { id: 'srv_3', name: '✨ Uñas Esculpidas', price: 12000 },
+      { id: 'srv_4', name: '🌸 Soft Gel / Tips Express', price: 9500 },
+      { id: 'srv_5', name: '👁️ Lash Lifting de Pestañas', price: 7500 },
+      { id: 'srv_6', name: '✨ Perfilado & Laminado de Cejas', price: 5000 },
+      { id: 'srv_7', name: '🦶 Belleza de Pies & Spa', price: 7000 }
+    ];
+
+    let salonServices = JSON.parse(localStorage.getItem('manucura_services')) || DEFAULT_MANUCURA_SERVICES;
+    let currentLoyaltyClientId = null;
+    let activeCobroClientId = null;
+
+    // --- COBRO QR MOSTRADOR ---
+    function openQuickQrModal() {
+      document.getElementById('quickQrAliasDisplay').textContent = 'Alias: ' + (settings.alias || 'estudio.nails.mp');
+      document.getElementById('quickQrTitularDisplay').textContent = 'Titular: ' + (settings.titular || 'Sofía Martínez');
+      document.getElementById('modalQuickQr').classList.remove('hidden');
+      setTimeout(() => renderQuickQr(), 60);
+    }
+
+    function renderQuickQr() {
+      const container = document.getElementById('quickQrContainer');
+      if (!container) return;
+      container.innerHTML = '';
+      const alias = settings.alias || 'estudio.nails.mp';
+      const qrPayload = 'https://mpago.la/transfer?alias=' + encodeURIComponent(alias);
+
+      let success = false;
+      try {
+        if (typeof QRCode !== 'undefined') {
+          new QRCode(container, {
+            text: qrPayload,
+            width: 170,
+            height: 170,
+            colorDark: '#881337',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.M
+          });
+          success = true;
+        }
+      } catch (err) {
+        console.warn('QRCode JS error:', err);
+      }
+
+      if (!success) {
+        container.innerHTML = '<img src="https://quickchart.io/qr?text=' + encodeURIComponent(qrPayload) + '&size=170" alt="QR Cobro" class="w-[170px] h-[170px] rounded-xl shadow-sm mx-auto block">';
+      }
+    }
+
+    // --- COBRO QR PARA CLIENTA CON DEUDA ---
+    function openCobroModalForClient(clientId) {
+      activeCobroClientId = clientId;
+      const client = clients.find(c => c.id === clientId);
+      if (!client) return;
+
+      document.getElementById('cobroClientNameDisplay').textContent = client.name;
+      document.getElementById('cobroAmountDisplay').textContent = formatCurrency(client.debt || 0);
+      document.getElementById('cobroClientAliasDisplay').textContent = 'Alias: ' + (settings.alias || 'estudio.nails.mp');
+      document.getElementById('modalCobroClient').classList.remove('hidden');
+
+      setTimeout(() => {
+        const qrEl = document.getElementById('cobroClientQrContainer');
+        if (!qrEl) return;
+        qrEl.innerHTML = '';
+        const alias = settings.alias || 'estudio.nails.mp';
+        const qrPayload = client.debt > 0 
+          ? 'https://mpago.la/transfer?alias=' + encodeURIComponent(alias) + '&amount=' + client.debt
+          : 'https://mpago.la/transfer?alias=' + encodeURIComponent(alias);
+
+        let success = false;
+        try {
+          if (typeof QRCode !== 'undefined') {
+            new QRCode(qrEl, {
+              text: qrPayload,
+              width: 150,
+              height: 150,
+              colorDark: '#881337',
+              colorLight: '#ffffff',
+              correctLevel: QRCode.CorrectLevel.M
+            });
+            success = true;
+          }
+        } catch (e) {
+          console.warn('QRCode error:', e);
+        }
+        if (!success) {
+          qrEl.innerHTML = '<img src="https://quickchart.io/qr?text=' + encodeURIComponent(qrPayload) + '&size=150" alt="QR Cobro" class="w-[150px] h-[150px] rounded-xl shadow-sm mx-auto block">';
+        }
+      }, 60);
+    }
+
+    function cancelClientDebt() {
+      if (!activeCobroClientId) return;
+      const client = clients.find(c => c.id === activeCobroClientId);
+      if (!client) return;
+
+      client.debt = 0;
+      persistData();
+      renderClients();
+      closeModal('modalCobroClient');
+      showToast('¡Saldo cancelado con éxito!', '✓');
+    }
+
+    // --- FIDELIZACIÓN (SELLOS) ---
+    function addLoyaltyStamp(clientId) {
+      const client = clients.find(c => c.id === clientId);
+      if (!client) return;
+
+      const target = settings.targetStamps || 6;
+      client.stamps = (client.stamps || 0) + 1;
+      persistData();
+      renderClients();
+
+      if (client.stamps >= target && typeof confetti === 'function') {
+        confetti({ particleCount: 50, spread: 70, origin: { y: 0.7 } });
+        showToast('¡' + client.name + ' completó sus ' + target + ' sellos!', '🏆');
+      } else {
+        showToast('Sello sumado para ' + client.name + ' (' + client.stamps + '/' + target + ')', '💅');
+      }
+    }
+
+    function openClientLoyaltyModal(clientId) {
+      currentLoyaltyClientId = clientId;
+      const client = clients.find(c => c.id === clientId);
+      if (!client) return;
+
+      const target = settings.targetStamps || 6;
+      const stamps = client.stamps || 0;
+
+      document.getElementById('modalLoyaltyClientTitle').textContent = 'Tarjeta de ' + client.name;
+      document.getElementById('modalLoyaltyCountText').textContent = stamps + ' / ' + target;
+      document.getElementById('modalLoyaltyRewardNotice').textContent = 'Premio: ' + (settings.rewardDescription || '1 Service Gratis');
+
+      const btnRedeem = document.getElementById('btnRedeemRewardInModal');
+      if (stamps >= target) {
+        btnRedeem.classList.remove('hidden');
+      } else {
+        btnRedeem.classList.add('hidden');
+      }
+
+      document.getElementById('clientLoyaltyModal').classList.remove('hidden');
+    }
+
+    function closeClientLoyaltyModal() {
+      document.getElementById('clientLoyaltyModal').classList.add('hidden');
+      currentLoyaltyClientId = null;
+    }
+
+    function adjustCurrentClientStamps(delta) {
+      if (!currentLoyaltyClientId) return;
+      const client = clients.find(c => c.id === currentLoyaltyClientId);
+      if (!client) return;
+
+      client.stamps = Math.max(0, (client.stamps || 0) + delta);
+      persistData();
+      renderClients();
+      openClientLoyaltyModal(client.id);
+    }
+
+    function redeemCurrentClientReward() {
+      if (!currentLoyaltyClientId) return;
+      const client = clients.find(c => c.id === currentLoyaltyClientId);
+      if (!client) return;
+
+      const target = settings.targetStamps || 6;
+      if (confirm('¿Canjear el premio "' + (settings.rewardDescription || '1 Service Gratis') + '" para ' + client.name + '?')) {
+        client.stamps = Math.max(0, (client.stamps || 0) - target);
+        persistData();
+        renderClients();
+        closeClientLoyaltyModal();
+        showToast('¡Premio canjeado con éxito!', '🎁');
+      }
+    }
+
+    function shareCurrentClientLoyaltyWhatsApp() {
+      if (!currentLoyaltyClientId) return;
+      const client = clients.find(c => c.id === currentLoyaltyClientId);
+      if (!client) return;
+
+      const phone = (client.phone || '').replace(/\D/g, '');
+      const baseUrl = window.location.origin + window.location.pathname;
+      const passUrl = baseUrl + '?pass=' + client.id;
+      const stamps = client.stamps || 0;
+      const target = settings.targetStamps || 6;
+
+      const msg = '¡Hola ' + client.name + '! 💅 Te comparto tu *Tarjeta Digital de Clienta Frecuente* en *' + settings.salonName + '*.\n\nYa tenés *' + stamps + ' de ' + target + ' sellos* acumulados para tu próximo *' + (settings.rewardDescription || 'Service Gratis') + '*.\n\nPodés ver tu tarjeta acá:\n' + passUrl;
+
+      const waUrl = phone 
+        ? 'https://wa.me/' + (phone.startsWith('54') ? phone : '549' + phone) + '?text=' + encodeURIComponent(msg)
+        : 'https://wa.me/?text=' + encodeURIComponent(msg);
+
+      window.open(waUrl, '_blank');
+    }
+
+    // --- VISTA PÚBLICA DE LA TARJETA DIGITAL (CLIENTA) ---
+    function checkCustomerPassMode() {
+      const params = new URLSearchParams(window.location.search);
+      const passId = params.get('pass') || params.get('card');
+      if (!passId) return false;
+
+      const client = clients.find(c => c.id === passId) || {
+        name: 'Clienta VIP',
+        service: 'Manicuría & Belleza',
+        stamps: 3
+      };
+
+      document.getElementById('customerPassView').classList.remove('hidden');
+      const adminContainer = document.querySelector('.min-h-screen.flex.justify-center');
+      if (adminContainer) adminContainer.classList.add('hidden');
+
+      document.getElementById('passSalonName').textContent = settings.salonName || 'Nails · Studio Sofía';
+      document.getElementById('passClientName').textContent = client.name;
+      document.getElementById('passClientService').textContent = '💅 ' + (client.service || 'Manicuría & Belleza');
+
+      if (settings.salonLogo) {
+        document.getElementById('passLogoBox').innerHTML = '<img src="' + settings.salonLogo + '" class="w-full h-full object-cover">';
+      }
+
+      const target = settings.targetStamps || 6;
+      const stamps = client.stamps || 0;
+      document.getElementById('passStampCount').textContent = stamps + ' / ' + target;
+      document.getElementById('passRemainingStamps').textContent = Math.max(0, target - stamps);
+      document.getElementById('passRewardName').textContent = settings.rewardDescription || '1 Service Gratis';
+
+      // Grid de esmaltes
+      const grid = document.getElementById('passStampGrid');
+      grid.innerHTML = '';
+      for (let i = 0; i < target; i++) {
+        const isFilled = i < stamps;
+        const div = document.createElement('div');
+        div.className = 'h-16 rounded-2xl flex flex-col items-center justify-center font-black text-xs transition-all shadow-sm ' + (isFilled ? 'bg-gradient-to-tr from-rose-500 to-pink-500 text-white shadow-rose-300' : 'bg-rose-50 text-slate-300 border border-rose-100');
+        div.innerHTML = '<span class="text-xl">' + (isFilled ? '💅' : '○') + '</span><span class="text-[9px] mt-0.5">' + (i + 1) + '</span>';
+        grid.appendChild(div);
+      }
+
+      // QR de la clienta
+      const qrBox = document.getElementById('passQrContainer');
+      if (qrBox) {
+        qrBox.innerHTML = '';
+        const qrPayload = 'NAILS_CLIENT:' + client.id;
+        let passSuccess = false;
+        try {
+          if (typeof QRCode !== 'undefined') {
+            new QRCode(qrBox, {
+              text: qrPayload,
+              width: 140,
+              height: 140,
+              colorDark: '#881337',
+              colorLight: '#ffffff',
+              correctLevel: QRCode.CorrectLevel.M
+            });
+            passSuccess = true;
+          }
+        } catch (e) {
+          console.warn('QRCode JS error:', e);
+        }
+        if (!passSuccess) {
+          qrBox.innerHTML = '<img src="https://quickchart.io/qr?text=' + encodeURIComponent(qrPayload) + '&size=140" alt="QR Clienta" class="w-[140px] h-[140px] rounded-xl shadow-sm mx-auto block">';
+        }
+      }
+
+      return true;
+    }
+
+    function savePassToHome() {
+      alert('Para guardar tu tarjeta en el celular:\n\n1. Tocá el botón de Compartir o los tres puntos del navegador.\n2. Seleccioná "Agregar a la pantalla principal" o "Instalar app".\n\n¡Listo! Vas a tener tu tarjeta VIP de esmaltes siempre a mano.');
+    }
+
+    function closeModal(modalId) {
+      const el = document.getElementById(modalId);
+      if (el) el.classList.add('hidden');
+    }
 
     // Helper: Dates & Times
     function getDateWeeksAgo(weeks) {
@@ -980,15 +1281,34 @@
 
         let timeBadgeHtml = '';
         if (isDue) {
-          timeBadgeHtml = `<span class="text-xs font-black text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full inline-flex items-center gap-1">Hace ${weeks} sem ⏰</span>`;
+          timeBadgeHtml = '<span class="text-xs font-black text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full inline-flex items-center gap-1">Hace ' + weeks + ' sem ⏰</span>';
         } else {
-          timeBadgeHtml = `<span class="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">al día ✓</span>`;
+          timeBadgeHtml = ''; // REGLA GEMINI: Sin badge redundante 'al día'
         }
 
         let debtBadgeHtml = '';
         if (hasDebt) {
-          debtBadgeHtml = `<span class="text-xs font-black text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-full">${formatCurrency(c.debt)}</span>`;
+          debtBadgeHtml = '<button onclick="openCobroModalForClient(\'' + c.id + '\')" class="text-xs font-black text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 active:scale-95 transition-all" title="Cobrar saldo con QR"><span>' + formatCurrency(c.debt) + '</span> <span class="text-[10px]">💵</span></button>';
         }
+
+        const targetStamps = settings.targetStamps || 6;
+        const stamps = c.stamps || 0;
+        const hasReward = stamps >= targetStamps;
+        const rewardBadgeHtml = hasReward 
+          ? '<span class="px-2 py-0.2 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse">🏆 ¡Premio Listo!</span>'
+          : '';
+
+        const loyaltyBarHtml = '<div class="flex items-center justify-between bg-rose-50/50 p-2 rounded-2xl border border-rose-100/80 mb-2">' +
+          '<div class="flex items-center gap-1.5 flex-wrap">' +
+            '<span class="text-xs">💅</span>' +
+            '<span class="text-xs font-bold text-rose-900">' + stamps + '/' + targetStamps + ' sellos</span>' +
+            rewardBadgeHtml +
+          '</div>' +
+          '<div class="flex items-center gap-1">' +
+            '<button onclick="addLoyaltyStamp(\'' + c.id + '\')" class="px-2 py-1 rounded-xl bg-white hover:bg-rose-100 text-rose-700 font-bold text-[11px] border border-rose-200 shadow-sm active:scale-95 transition-all" title="Sumar sello">+ Sello 💅</button>' +
+            '<button onclick="openClientLoyaltyModal(\'' + c.id + '\')" class="px-2 py-1 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-800 font-bold text-[11px] active:scale-95 transition-all" title="Ver pase digital y compartir">Pase 📲</button>' +
+          '</div>' +
+        '</div>';
 
         let sentIndicator = '';
         if (c.lastReminderSent) {
@@ -1027,6 +1347,7 @@
             </div>
           ` : ''}
 
+          ${loyaltyBarHtml}
           <div class="pt-1 flex items-center gap-2 border-t border-rose-50">
             <button 
               onclick="sendWhatsAppReminder('${c.id}')"
@@ -1271,6 +1592,7 @@
           intervalWeeks,
           debt,
           notes,
+          stamps: 1,
           lastReminderSent: null
         };
         clients.unshift(newClient);
@@ -1297,6 +1619,11 @@
     // Profile & Settings
     function openProfileModal() {
       document.getElementById('settingsSalonName').value = settings.salonName || DEFAULT_SETTINGS.salonName;
+      document.getElementById('settingsAlias').value = settings.alias || DEFAULT_SETTINGS.alias || 'estudio.nails.mp';
+      document.getElementById('settingsCbu').value = settings.cbu || DEFAULT_SETTINGS.cbu || '0000003100010002000300';
+      document.getElementById('settingsTitular').value = settings.titular || DEFAULT_SETTINGS.titular || 'Sofía Martínez';
+      document.getElementById('settingsTargetStamps').value = settings.targetStamps || DEFAULT_SETTINGS.targetStamps || 6;
+      document.getElementById('settingsRewardDescription').value = settings.rewardDescription || DEFAULT_SETTINGS.rewardDescription || '1 Service de Semipermanente Gratis';
       document.getElementById('settingsSalonPhone').value = settings.salonPhone || '';
       document.getElementById('settingsTemplate').value = cleanWhatsAppText(settings.template || DEFAULT_SETTINGS.template);
       document.getElementById('settingsBookingToggle').checked = Boolean(settings.bookingEnabled);
@@ -1460,6 +1787,11 @@
 
     function saveSettings() {
       settings.salonName = document.getElementById('settingsSalonName').value.trim() || DEFAULT_SETTINGS.salonName;
+      settings.alias = document.getElementById('settingsAlias').value.trim() || 'estudio.nails.mp';
+      settings.cbu = document.getElementById('settingsCbu').value.trim() || '0000003100010002000300';
+      settings.titular = document.getElementById('settingsTitular').value.trim() || 'Sofía Martínez';
+      settings.targetStamps = parseInt(document.getElementById('settingsTargetStamps').value, 10) || 6;
+      settings.rewardDescription = document.getElementById('settingsRewardDescription').value.trim() || '1 Service de Semipermanente Gratis';
       settings.salonPhone = document.getElementById('settingsSalonPhone').value.trim();
       settings.template = cleanWhatsAppText(document.getElementById('settingsTemplate').value.trim() || DEFAULT_SETTINGS.template);
       settings.bookingEnabled = document.getElementById('settingsBookingToggle').checked;
@@ -1830,5 +2162,154 @@
       checkURLViewMode();
     });
   </script>
+
+  <!-- ========================================== -->
+  <!-- VISTA 3: TARJETA DIGITAL DE BENEFICIOS     -->
+  <!-- ========================================== -->
+  <div id="customerPassView" class="hidden min-h-screen w-full flex flex-col items-center justify-center p-4 bg-gradient-to-b from-[#FFF5F7] via-[#FFEBF0] to-[#FED7E2]">
+    <div class="w-full max-w-sm rounded-3xl bg-white border border-rose-200 p-6 shadow-2xl space-y-5 text-center relative overflow-hidden">
+      <div class="absolute -top-12 -right-12 w-32 h-32 bg-rose-400/20 rounded-full blur-2xl"></div>
+
+      <!-- Encabezado con Logo -->
+      <div class="flex flex-col items-center space-y-2">
+        <div id="passLogoBox" class="w-16 h-16 rounded-full bg-gradient-to-tr from-rose-500 to-pink-500 p-0.5 shadow-md flex items-center justify-center overflow-hidden">
+          <div class="w-full h-full bg-white rounded-full flex items-center justify-center overflow-hidden">
+            <span class="text-2xl">💅</span>
+          </div>
+        </div>
+        <div>
+          <div class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-black uppercase tracking-wider mb-1">
+            <span>✨ Club VIP de Uñas & Belleza</span>
+          </div>
+          <h2 id="passSalonName" class="text-xl font-black text-slate-900 tracking-tight">Nails · Studio Sofía</h2>
+          <p class="text-xs text-rose-600 font-semibold">Tarjeta Digital de Clienta Frecuente</p>
+        </div>
+      </div>
+
+      <!-- Nombre de la Clienta -->
+      <div class="bg-rose-50/60 p-4 rounded-2xl border border-rose-100">
+        <div class="text-[10px] text-slate-400 uppercase font-black tracking-wider">Titular</div>
+        <div id="passClientName" class="text-lg font-black text-slate-900">Martina</div>
+        <div id="passClientService" class="text-xs font-semibold text-rose-700 mt-0.5">💅 Semipermanente</div>
+      </div>
+
+      <!-- Cuadrícula de Sellos (Esmaltes) -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between text-xs px-1">
+          <span class="text-slate-500 font-bold">Tus servicios acumulados:</span>
+          <span id="passStampCount" class="font-black text-rose-600 text-sm">3 / 6</span>
+        </div>
+
+        <div id="passStampGrid" class="grid grid-cols-3 gap-2.5 py-2"></div>
+
+        <div id="passRewardStatus" class="p-3 rounded-2xl bg-rose-100/70 border border-rose-200 text-xs font-bold text-rose-900 leading-tight">
+          Sumá <span id="passRemainingStamps">3</span> servicios más para tu próximo <span id="passRewardName">1 Service Gratis</span> 🎁
+        </div>
+      </div>
+
+      <!-- QR de la clienta para mostrar en mostrador -->
+      <div class="bg-white p-3 rounded-2xl inline-block shadow-md mx-auto border border-rose-100">
+        <div id="passQrContainer" class="flex items-center justify-center min-w-[140px] min-h-[140px]"></div>
+      </div>
+      <p class="text-[11px] text-slate-400">Mostrá este código en el estudio para sumar sellos</p>
+
+      <!-- Botón Guardar en Celular -->
+      <button onclick="savePassToHome()" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-rose-500/20 active:scale-95 transition-all">
+        <span>📲 Guardar en Pantalla de Inicio</span>
+      </button>
+
+      <div class="pt-1">
+        <a href="index.html" class="text-[11px] text-slate-400 hover:text-slate-600 underline">
+          ⚙️ Acceso de Estudio (Administración)
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: COBRO QR MOSTRADOR -->
+  <div id="modalQuickQr" class="hidden fixed inset-0 z-50 modal-backdrop bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-xs bg-white rounded-3xl p-5 space-y-4 text-center shadow-2xl border border-rose-100">
+      <div class="flex items-center justify-between pb-2 border-b border-rose-100">
+        <h3 class="text-sm font-black text-slate-800">📷 QR de Cobro Mostrador</h3>
+        <button onclick="closeModal('modalQuickQr')" class="w-7 h-7 rounded-full bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center">✕</button>
+      </div>
+
+      <div class="bg-rose-50 p-3 rounded-2xl inline-block mx-auto border border-rose-100">
+        <div id="quickQrContainer" class="flex items-center justify-center min-w-[170px] min-h-[170px]"></div>
+      </div>
+
+      <div class="space-y-1 text-xs">
+        <div id="quickQrAliasDisplay" class="font-black text-rose-600 text-sm">Alias: estudio.nails.mp</div>
+        <div id="quickQrTitularDisplay" class="text-slate-500 font-semibold">Titular: Sofía Martínez</div>
+      </div>
+
+      <p class="text-[11px] text-slate-400">Apuntá la cámara para transferir con Mercado Pago, MODO o cualquier banco.</p>
+    </div>
+  </div>
+
+  <!-- MODAL: COBRAR SALDO DE CLIENTA CON QR -->
+  <div id="modalCobroClient" class="hidden fixed inset-0 z-50 modal-backdrop bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-xs bg-white rounded-3xl p-5 space-y-4 text-center shadow-2xl border border-rose-100">
+      <div class="flex items-center justify-between pb-2 border-b border-rose-100">
+        <h3 class="text-sm font-black text-slate-800">Cobro de Saldo</h3>
+        <button onclick="closeModal('modalCobroClient')" class="w-7 h-7 rounded-full bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center">✕</button>
+      </div>
+
+      <div>
+        <p id="cobroClientNameDisplay" class="text-xs font-bold text-slate-600">Martina</p>
+        <div id="cobroAmountDisplay" class="text-2xl font-black text-rose-600 mt-1">$0</div>
+      </div>
+
+      <div class="bg-rose-50 p-3 rounded-2xl inline-block mx-auto border border-rose-100">
+        <div id="cobroClientQrContainer" class="flex items-center justify-center min-w-[150px] min-h-[150px]"></div>
+      </div>
+
+      <div class="text-xs text-rose-700 font-bold" id="cobroClientAliasDisplay">Alias: estudio.nails.mp</div>
+
+      <div class="pt-2 flex gap-2">
+        <button onclick="cancelClientDebt()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs active:scale-95 transition-all shadow-sm">
+          ✓ Registrar Saldo Pagado
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: FIDELIDAD DE LA CLIENTA -->
+  <div id="clientLoyaltyModal" class="hidden fixed inset-0 z-50 modal-backdrop bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-sm bg-white rounded-3xl p-5 space-y-4 text-center shadow-2xl border border-rose-100">
+      <div class="flex items-center justify-between pb-2 border-b border-rose-100">
+        <h3 id="modalLoyaltyClientTitle" class="text-sm font-black text-slate-800">Tarjeta de Fidelidad</h3>
+        <button onclick="closeClientLoyaltyModal()" class="w-7 h-7 rounded-full bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center">✕</button>
+      </div>
+
+      <div class="bg-rose-50/60 p-4 rounded-2xl border border-rose-100 space-y-2">
+        <div class="text-xs text-slate-500 font-bold">Sellos acumulados:</div>
+        <div id="modalLoyaltyCountText" class="text-2xl font-black text-rose-600">0 / 6</div>
+        <p id="modalLoyaltyRewardNotice" class="text-xs text-rose-900 font-semibold">Premio: 1 Service Gratis</p>
+      </div>
+
+      <div class="flex items-center justify-center gap-2">
+        <button onclick="adjustCurrentClientStamps(-1)" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-black text-sm active:scale-95 transition-all">
+          -1
+        </button>
+        <button onclick="adjustCurrentClientStamps(1)" class="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs active:scale-95 transition-all shadow-md">
+          💅 +1 Sello de Service
+        </button>
+      </div>
+
+      <div id="btnRedeemRewardInModal" class="hidden pt-1">
+        <button onclick="redeemCurrentClientReward()" class="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-rose-500 text-white font-black text-xs uppercase tracking-wider active:scale-95 transition-all shadow-lg animate-bounce">
+          🎁 Canjear Premio Gratis
+        </button>
+      </div>
+
+      <div class="pt-2 border-t border-rose-100">
+        <button onclick="shareCurrentClientLoyaltyWhatsApp()" class="w-full py-2.5 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white font-black text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-sm">
+          <span>📲 Enviar Tarjeta por WhatsApp</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
