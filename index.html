@@ -2876,12 +2876,8 @@
         }
 
         let clientDisplay = 'Cliente';
-        const petEl = document.getElementById('bookingPetName');
-        const ownerEl = document.getElementById('bookingOwnerName');
         const clientEl = document.getElementById('bookingClientName');
-        if (petEl && ownerEl) {
-          clientDisplay = petEl.value.trim() + ' (' + ownerEl.value.trim() + ')';
-        } else if (clientEl) {
+        if (clientEl && clientEl.value.trim()) {
           clientDisplay = clientEl.value.trim();
         }
 
@@ -2901,16 +2897,9 @@
 
         let phone = (settings.salonPhone || '').replace(/\D/g, '');
         const dateFormatted = typeof formatDateAR === 'function' ? formatDateAR(dateStr) : dateStr;
-        let msg = '';
-        if (petEl && ownerEl) {
-          const sizeInput = document.getElementById('bookingPetSize');
-          const petSize = sizeInput ? sizeInput.value : '';
-          msg = `¡Hola ${settings.salonName || 'Peluquería Canina'}! Soy ${ownerEl.value.trim()}.\n✅ *Ya dejé agendado el turno en el turnero online:*\n\n• Mascota: ${petEl.value.trim()} (${petSize})\n• Servicio: ${bookingState.selectedService}\n• Día: ${dateFormatted}\n• Horario: ${hourStr}\n\n¡Muchas gracias!`;
-        } else {
-          const detailEl = document.getElementById('bookingServiceDetail') || document.getElementById('bookingDesignNotes');
-          const notes = detailEl ? detailEl.value.trim() : '';
-          msg = `¡Hola ${settings.salonName || ''}! Soy ${clientDisplay}.\n✅ *Ya dejé agendado mi turno en el turnero online:*\n\n• Servicio: ${bookingState.selectedService}${notes ? ' (' + notes + ')' : ''}\n• Día: ${dateFormatted}\n• Horario: ${hourStr}\n\n¡Muchas gracias!`;
-        }
+        const detailEl = document.getElementById('bookingDesignPreference');
+        const notes = detailEl ? detailEl.value.trim() : '';
+        let msg = `¡Hola ${settings.salonName || ''}! Soy ${clientDisplay}.\n✅ *Ya dejé agendado mi turno en el turnero online:*\n\n• Servicio: ${bookingState.selectedService}${notes ? ' (' + notes + ')' : ''}\n• Día: ${dateFormatted}\n• Horario: ${hourStr}\n\n¡Muchas gracias!`;
         msg = typeof cleanWhatsAppText === 'function' ? cleanWhatsAppText(msg) : msg;
         const waUrl = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
         window.open(waUrl, '_blank');
