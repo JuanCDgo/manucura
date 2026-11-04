@@ -558,9 +558,69 @@
         </div>
       </div>
 
+      <!-- Sección 2: Cobro con QR y Datos de Cuenta (Regla 1 y 2 GEMINI.md) -->
+      <div class="bg-rose-50/50 p-4 rounded-2xl border border-rose-100 space-y-3">
+        <h3 class="text-xs font-black uppercase tracking-wider text-rose-800">2. Cobro QR y Transferencia</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">Alias de Cobro</label>
+            <input 
+              type="text" 
+              id="settingsAlias" 
+              placeholder="Ej: estudio.nails.mp" 
+              class="w-full px-3 py-2 rounded-xl border border-rose-200 focus:ring-2 focus:ring-rose-400 focus:outline-none text-xs font-semibold bg-white"
+            >
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">Titular de la Cuenta</label>
+            <input 
+              type="text" 
+              id="settingsTitular" 
+              placeholder="Ej: Sofía Martínez" 
+              class="w-full px-3 py-2 rounded-xl border border-rose-200 focus:ring-2 focus:ring-rose-400 focus:outline-none text-xs font-semibold bg-white"
+            >
+          </div>
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">CBU / CVU (Opcional)</label>
+          <input 
+            type="text" 
+            id="settingsCbu" 
+            placeholder="0000003100010002000300" 
+            class="w-full px-3 py-2 rounded-xl border border-rose-200 focus:ring-2 focus:ring-rose-400 focus:outline-none text-xs font-mono bg-white"
+          >
+        </div>
+      </div>
+
+      <!-- Sección 3: Programa de Fidelidad y Premios (Regla 5 GEMINI.md) -->
+      <div class="bg-rose-50/50 p-4 rounded-2xl border border-rose-100 space-y-3">
+        <h3 class="text-xs font-black uppercase tracking-wider text-rose-800">3. Fidelidad y Sellos Digitales</h3>
+        <div class="grid grid-cols-3 gap-2.5">
+          <div class="col-span-1">
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">Sellos Meta</label>
+            <input 
+              type="number" 
+              id="settingsTargetStamps" 
+              min="1" 
+              max="20" 
+              class="w-full px-3 py-2 rounded-xl border border-rose-200 focus:ring-2 focus:ring-rose-400 focus:outline-none text-xs font-semibold bg-white"
+            >
+          </div>
+          <div class="col-span-2">
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">Premio al completar</label>
+            <input 
+              type="text" 
+              id="settingsRewardDescription" 
+              placeholder="Ej: 1 Service de Semipermanente Gratis" 
+              class="w-full px-3 py-2 rounded-xl border border-rose-200 focus:ring-2 focus:ring-rose-400 focus:outline-none text-xs font-semibold bg-white"
+            >
+          </div>
+        </div>
+      </div>
+
       <!-- Sección 2: Mensaje de WhatsApp para Recordatorios -->
       <div class="bg-rose-50/50 p-4 rounded-2xl border border-rose-100 space-y-2">
-        <h3 class="text-xs font-black uppercase tracking-wider text-rose-800">2. Mensaje para Enviar Recordatorio</h3>
+        <h3 class="text-xs font-black uppercase tracking-wider text-rose-800">4. Mensaje para Enviar Recordatorio</h3>
         <textarea 
           id="settingsTemplate" 
           rows="3" 
@@ -1626,12 +1686,13 @@
 
     // Profile & Settings
     function openProfileModal() {
-      document.getElementById('settingsSalonName').value = settings.salonName || DEFAULT_SETTINGS.salonName;
-      document.getElementById('settingsAlias').value = settings.alias || DEFAULT_SETTINGS.alias || 'estudio.nails.mp';
-      document.getElementById('settingsCbu').value = settings.cbu || DEFAULT_SETTINGS.cbu || '0000003100010002000300';
-      document.getElementById('settingsTitular').value = settings.titular || DEFAULT_SETTINGS.titular || 'Sofía Martínez';
-      document.getElementById('settingsTargetStamps').value = settings.targetStamps || DEFAULT_SETTINGS.targetStamps || 6;
-      document.getElementById('settingsRewardDescription').value = settings.rewardDescription || DEFAULT_SETTINGS.rewardDescription || '1 Service de Semipermanente Gratis';
+      const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+      setVal('settingsSalonName', settings.salonName || DEFAULT_SETTINGS.salonName);
+      setVal('settingsAlias', settings.alias || DEFAULT_SETTINGS.alias || 'estudio.nails.mp');
+      setVal('settingsCbu', settings.cbu || DEFAULT_SETTINGS.cbu || '0000003100010002000300');
+      setVal('settingsTitular', settings.titular || DEFAULT_SETTINGS.titular || 'Sofía Martínez');
+      setVal('settingsTargetStamps', settings.targetStamps || DEFAULT_SETTINGS.targetStamps || 6);
+      setVal('settingsRewardDescription', settings.rewardDescription || DEFAULT_SETTINGS.rewardDescription || '1 Service de Semipermanente Gratis');
       document.getElementById('settingsSalonPhone').value = settings.salonPhone || '';
       document.getElementById('settingsTemplate').value = cleanWhatsAppText(settings.template || DEFAULT_SETTINGS.template);
       document.getElementById('settingsBookingToggle').checked = Boolean(settings.bookingEnabled);
@@ -1794,12 +1855,13 @@
     }
 
     function saveSettings() {
-      settings.salonName = document.getElementById('settingsSalonName').value.trim() || DEFAULT_SETTINGS.salonName;
-      settings.alias = document.getElementById('settingsAlias').value.trim() || 'estudio.nails.mp';
-      settings.cbu = document.getElementById('settingsCbu').value.trim() || '0000003100010002000300';
-      settings.titular = document.getElementById('settingsTitular').value.trim() || 'Sofía Martínez';
-      settings.targetStamps = parseInt(document.getElementById('settingsTargetStamps').value, 10) || 6;
-      settings.rewardDescription = document.getElementById('settingsRewardDescription').value.trim() || '1 Service de Semipermanente Gratis';
+      const getVal = (id, fallback = '') => { const el = document.getElementById(id); return el ? el.value.trim() : fallback; };
+      settings.salonName = getVal('settingsSalonName', DEFAULT_SETTINGS.salonName);
+      settings.alias = getVal('settingsAlias', 'estudio.nails.mp');
+      settings.cbu = getVal('settingsCbu', '0000003100010002000300');
+      settings.titular = getVal('settingsTitular', 'Sofía Martínez');
+      settings.targetStamps = parseInt(getVal('settingsTargetStamps', '6'), 10) || 6;
+      settings.rewardDescription = getVal('settingsRewardDescription', '1 Service de Semipermanente Gratis');
       settings.salonPhone = document.getElementById('settingsSalonPhone').value.trim();
       settings.template = cleanWhatsAppText(document.getElementById('settingsTemplate').value.trim() || DEFAULT_SETTINGS.template);
       settings.bookingEnabled = document.getElementById('settingsBookingToggle').checked;
