@@ -135,6 +135,11 @@
             </button>
 
             <!-- Config Button -->
+            <!-- Control Manual de Horarios / Agenda -->
+            <button onclick="openOwnerAgendaModal()" class="w-10 h-10 rounded-full bg-white border border-rose-200 flex items-center justify-center text-rose-600 hover:bg-rose-50 active:scale-95 transition-transform shadow-sm" title="Control Manual de Agenda y Horarios (Ocupar / Liberar)">
+              <span class="text-base font-black">📅</span>
+            </button>
+
             <button onclick="openProfileModal()" class="w-10 h-10 rounded-full bg-white border border-rose-200 flex items-center justify-center text-slate-600 hover:bg-rose-50 active:scale-95 transition-transform shadow-sm" title="Ajustes y Turnero">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
@@ -626,6 +631,9 @@
               <button type="button" onclick="openBookingPreview()" class="text-xs text-rose-700 font-bold hover:underline">
                 👁️ Probar cómo lo ve la clienta
               </button>
+                <button type="button" onclick="closeProfileModal(); openOwnerAgendaModal();" class="w-full mt-2 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all">
+                  <span>📅 Control Manual de Horarios (Ocupar / Liberar)</span>
+                </button>
             </div>
           </div>
         </div>
@@ -2310,6 +2318,797 @@
       </div>
     </div>
   </div>
+
+
+  <!-- ========================================================= -->
+  <!-- MODAL: CONTROL MANUAL DE AGENDA Y HORARIOS (MODO DUEÑO)   -->
+  <!-- ========================================================= -->
+  <div id="ownerAgendaModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 modal-backdrop hidden">
+    <div class="bg-white text-slate-900 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl max-h-[92vh] overflow-y-auto space-y-4 border border-slate-200">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+        <div>
+          <h3 class="text-base font-black text-slate-900 flex items-center gap-1.5">
+            <span>📅</span> Control Manual de Agenda y Turnos
+          </h3>
+          <p class="text-[11px] text-slate-500 font-medium">Ocupá, bloqueá o liberá horarios en vivo para todos los teléfonos</p>
+        </div>
+        <button type="button" onclick="closeOwnerAgendaModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center">✕</button>
+      </div>
+
+      <!-- Selector de Día en la Agenda del Dueño -->
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="text-[11px] font-extrabold text-slate-600 uppercase tracking-wider">1. Elegí el Día a gestionar</label>
+          <button type="button" onclick="refreshOwnerAgendaDay()" class="text-[11px] font-bold text-blue-600 hover:underline flex items-center gap-1">
+            <span>🔄 Actualizar</span>
+          </button>
+        </div>
+        <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1" id="ownerAgendaDaysContainer"></div>
+      </div>
+
+      <!-- Barra de Estado del Día Completo -->
+      <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Estado del día seleccionado</span>
+          <span id="ownerAgendaDayStatusLabel" class="text-xs font-black text-emerald-700">🟢 Día Abierto para Reservas</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button type="button" id="btnToggleDayClosed" onclick="toggleOwnerDayClosed()" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-[11px] transition active:scale-95">
+            🔒 Cerrar Día
+          </button>
+          <button type="button" onclick="freeAllSlotsInDay()" class="px-2.5 py-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold text-[11px] transition active:scale-95" title="Liberar todos los horarios de este día">
+            🔓 Liberar Todo
+          </button>
+        </div>
+      </div>
+
+      <!-- Input opcional para agendar cliente manual -->
+      <div class="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-3 space-y-1.5">
+        <label class="block text-[11px] font-extrabold text-amber-900 uppercase">Nombre o Nota al Ocupar Manualmente (Opcional)</label>
+        <input 
+          type="text" 
+          id="ownerManualClientInput" 
+          placeholder="Ej: Carlos (vino al local) o Trámite personal..." 
+          class="w-full px-3 py-2 rounded-xl border border-amber-300 bg-white text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+        >
+        <p class="text-[10px] text-amber-700">Tocá cualquier horario <strong>Libre</strong> abajo para ocuparlo, o tocá <strong>Liberar</strong> en uno ocupado para habilitarlo de nuevo.</p>
+      </div>
+
+      <!-- Lista de Horarios del Día (Control 1 a 1) -->
+      <div>
+        <label class="block text-[11px] font-extrabold text-slate-600 uppercase tracking-wider mb-2">2. Horarios del Día (Tocá para Ocupar o Liberar)</label>
+        <div id="ownerAgendaHoursList" class="space-y-2 max-h-72 overflow-y-auto pr-1"></div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-200 flex justify-end">
+        <button type="button" onclick="closeOwnerAgendaModal()" class="w-full py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl font-black text-xs">
+          Listo / Cerrar Agenda
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script id="cloudTurnosModule">
+    // =========================================================================
+    // MOTOR DE TURNOS EN LA NUBE EN TIEMPO REAL + CONTROL MANUAL DEL DUEÑO
+    // =========================================================================
+    const CLOUD_KV_APP_KEY = 'ozyom7gs';
+    const CLOUD_KV_BASE = 'https://keyvalue.immanuel.co/api/KeyVal';
+    const CLOUD_APP_ID = 'manucura';
+    const CLOUD_GROUP = 2;
+
+    const cloudSlotsCache = {
+      days: {},      // { YYYYMMDD: { closed: false, hours: ['1500', ...] } }
+      details: {},   // { 'YYYYMMDD_HHMM': { n: 'Cliente', s: 'Servicio', t: 'client' } }
+      loading: false
+    };
+
+    let ownerSelectedDateKey = '';
+    let ownerSelectedDateLabel = '';
+    let clientPollTimer = null;
+
+    function normDateKey(dateStr) {
+      if (!dateStr) return '';
+      const s = String(dateStr).trim();
+      // DD/MM/YYYY -> YYYYMMDD
+      if (s.includes('/')) {
+        const parts = s.split('/');
+        if (parts.length === 3) {
+          return parts[2] + parts[1].padStart(2, '0') + parts[0].padStart(2, '0');
+        }
+      }
+      // YYYY-MM-DD -> YYYYMMDD
+      if (s.includes('-')) {
+        return s.replace(/-/g, '');
+      }
+      return s.replace(/[^0-9]/g, '');
+    }
+
+    function normHourKey(hourStr) {
+      if (!hourStr) return '';
+      const clean = String(hourStr).replace('hs', '').trim();
+      const digits = clean.replace(/[^0-9]/g, '');
+      return digits.padStart(4, '0').slice(0, 4);
+    }
+
+    function formatHourKeyToDisplay(hk) {
+      const s = String(hk).padStart(4, '0');
+      return s.slice(0, 2) + ':' + s.slice(2, 4);
+    }
+
+    function encodeSlotDetail(obj) {
+      try {
+        const safe = {
+          n: String(obj.n || 'Ocupado').slice(0, 26),
+          s: String(obj.s || 'Turno').slice(0, 30),
+          t: obj.t || 'client'
+        };
+        const json = JSON.stringify(safe);
+        return btoa(unescape(encodeURIComponent(json)))
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, '');
+      } catch (e) {
+        return 'T2N1cGFkbw';
+      }
+    }
+
+    function decodeSlotDetail(b64url) {
+      try {
+        if (!b64url || b64url === 'null') return null;
+        let b64 = String(b64url).replace(/"/g, '').trim().replace(/-/g, '+').replace(/_/g, '/');
+        while (b64.length % 4) b64 += '=';
+        const json = decodeURIComponent(escape(atob(b64)));
+        return JSON.parse(json);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function parseDayCloudValue(raw) {
+      const clean = String(raw || '').replace(/"/g, '').trim();
+      if (!clean || clean === 'null' || clean === 'FREE') {
+        return { closed: false, hours: [] };
+      }
+      let closed = false;
+      let rest = clean;
+      if (rest.startsWith('CLOSED')) {
+        closed = true;
+        rest = rest.includes('~') ? rest.split('~')[1] : '';
+      }
+      const hours = rest
+        ? rest.split('-').map(x => x.trim()).filter(x => /^[0-9]{4}$/.test(x))
+        : [];
+      return { closed, hours: Array.from(new Set(hours)).sort() };
+    }
+
+    function serializeDayCloudValue(dayObj) {
+      const hrs = Array.from(new Set(dayObj.hours || [])).sort().join('-');
+      if (dayObj.closed) {
+        return hrs ? ('CLOSED~' + hrs) : 'CLOSED';
+      }
+      return hrs || 'FREE';
+    }
+
+    async function fetchCloudDay(dateStr) {
+      const dKey = normDateKey(dateStr);
+      if (!dKey) return { closed: false, hours: [] };
+      try {
+        const res = await fetch(CLOUD_KV_BASE + '/GetValue/' + CLOUD_KV_APP_KEY + '/' + CLOUD_APP_ID + '_d_' + dKey + '?t=' + Date.now(), {
+          cache: 'no-store'
+        });
+        if (res.ok) {
+          const text = await res.text();
+          const parsed = parseDayCloudValue(text);
+          cloudSlotsCache.days[dKey] = parsed;
+          localStorage.setItem(CLOUD_APP_ID + '_cloud_day_' + dKey, JSON.stringify(parsed));
+          return parsed;
+        }
+      } catch (err) {
+        console.warn('Cloud day read fallback:', err);
+      }
+      const local = localStorage.getItem(CLOUD_APP_ID + '_cloud_day_' + dKey);
+      if (local) {
+        try {
+          cloudSlotsCache.days[dKey] = JSON.parse(local);
+          return cloudSlotsCache.days[dKey];
+        } catch (e) {}
+      }
+      if (!cloudSlotsCache.days[dKey]) {
+        cloudSlotsCache.days[dKey] = { closed: false, hours: [] };
+      }
+      return cloudSlotsCache.days[dKey];
+    }
+
+    async function saveCloudDay(dateStr, dayObj) {
+      const dKey = normDateKey(dateStr);
+      if (!dKey) return false;
+      cloudSlotsCache.days[dKey] = dayObj;
+      localStorage.setItem(CLOUD_APP_ID + '_cloud_day_' + dKey, JSON.stringify(dayObj));
+      const val = serializeDayCloudValue(dayObj);
+      try {
+        const res = await fetch(CLOUD_KV_BASE + '/UpdateValue/' + CLOUD_KV_APP_KEY + '/' + CLOUD_APP_ID + '_d_' + dKey + '/' + val, {
+          method: 'POST'
+        });
+        return res.ok;
+      } catch (err) {
+        console.warn('Cloud day write error:', err);
+        return false;
+      }
+    }
+
+    async function fetchCloudSlotDetail(dateStr, hourStr) {
+      const dKey = normDateKey(dateStr);
+      const hKey = normHourKey(hourStr);
+      const compKey = dKey + '_' + hKey;
+      try {
+        const res = await fetch(CLOUD_KV_BASE + '/GetValue/' + CLOUD_KV_APP_KEY + '/' + CLOUD_APP_ID + '_s_' + compKey + '?t=' + Date.now(), {
+          cache: 'no-store'
+        });
+        if (res.ok) {
+          const text = await res.text();
+          const decoded = decodeSlotDetail(text);
+          if (decoded) {
+            cloudSlotsCache.details[compKey] = decoded;
+            return decoded;
+          }
+        }
+      } catch (e) {}
+      return cloudSlotsCache.details[compKey] || { n: 'Reservado', s: 'Turno agendado', t: 'client' };
+    }
+
+    async function saveCloudSlotDetail(dateStr, hourStr, detailObj) {
+      const dKey = normDateKey(dateStr);
+      const hKey = normHourKey(hourStr);
+      const compKey = dKey + '_' + hKey;
+      cloudSlotsCache.details[compKey] = detailObj;
+      const encoded = encodeSlotDetail(detailObj);
+      try {
+        await fetch(CLOUD_KV_BASE + '/UpdateValue/' + CLOUD_KV_APP_KEY + '/' + CLOUD_APP_ID + '_s_' + compKey + '/' + encoded, {
+          method: 'POST'
+        });
+      } catch (e) {}
+    }
+
+    async function syncScheduleConfigToCloud() {
+      try {
+        const wd = (settings.workDays || [1, 2, 3, 4, 5, 6]).join(',');
+        const sh = settings.bookingStartHour || 9;
+        const eh = settings.bookingEndHour || 19;
+        const sm = settings.bookingSlotMinutes || 60;
+        const val = wd + '~' + sh + '~' + eh + '~' + sm;
+        await fetch(CLOUD_KV_BASE + '/UpdateValue/' + CLOUD_KV_APP_KEY + '/' + CLOUD_APP_ID + '_cfg/' + val, {
+          method: 'POST'
+        });
+      } catch (e) {}
+    }
+
+    async function loadScheduleConfigFromCloud() {
+      try {
+        const res = await fetch(CLOUD_KV_BASE + '/GetValue/' + CLOUD_KV_APP_KEY + '/' + CLOUD_APP_ID + '_cfg?t=' + Date.now(), {
+          cache: 'no-store'
+        });
+        if (res.ok) {
+          const raw = (await res.text()).replace(/"/g, '').trim();
+          if (raw && raw.includes('~')) {
+            const parts = raw.split('~');
+            const wd = parts[0].split(',').map(Number).filter(n => !isNaN(n));
+            const sh = Number(parts[1]);
+            const eh = Number(parts[2]);
+            const sm = Number(parts[3]);
+            if (wd.length) {
+              settings.workDays = wd;
+              if (typeof bookingState !== 'undefined') bookingState.workDays = wd;
+            }
+            if (sh > 0) {
+              settings.bookingStartHour = sh;
+              if (typeof bookingState !== 'undefined') bookingState.startHour = sh;
+            }
+            if (eh > 0) {
+              settings.bookingEndHour = eh;
+              if (typeof bookingState !== 'undefined') bookingState.endHour = eh;
+            }
+            if (sm > 0) {
+              settings.bookingSlotMinutes = sm;
+              if (typeof bookingState !== 'undefined') bookingState.slotMinutes = sm;
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    function getActiveBookingDateStr() {
+      if (typeof bookingState === 'undefined') return '';
+      return CLOUD_GROUP === 1 ? (bookingState.selectedDateStr || '') : (bookingState.selectedDate || '');
+    }
+
+    function getAllDaySlotsList() {
+      const start = (typeof bookingState !== 'undefined' && bookingState.startHour) ? bookingState.startHour : (settings.bookingStartHour || 9);
+      const end = (typeof bookingState !== 'undefined' && bookingState.endHour) ? bookingState.endHour : (settings.bookingEndHour || 19);
+      const step = (typeof bookingState !== 'undefined' && bookingState.slotMinutes) ? bookingState.slotMinutes : (settings.bookingSlotMinutes || 60);
+      const list = [];
+      let cur = start * 60;
+      const endMin = end * 60;
+      while (cur < endMin) {
+        const hh = String(Math.floor(cur / 60)).padStart(2, '0');
+        const mm = String(cur % 60).padStart(2, '0');
+        list.push(CLOUD_GROUP === 1 ? (hh + ':' + mm) : (hh + ':' + mm + ' hs'));
+        cur += step;
+      }
+      return list;
+    }
+
+    // --- OVERRIDE: RENDERIZADO DE HORARIOS DEL CLIENTE CON BLOQUEO EN GRIS ---
+    function renderCloudBookingHoursUI() {
+      const container = document.getElementById('bookingHoursContainer');
+      if (!container) return;
+
+      const dateStr = getActiveBookingDateStr();
+      const dKey = normDateKey(dateStr);
+      const dayData = cloudSlotsCache.days[dKey] || { closed: false, hours: [] };
+      const slots = getAllDaySlotsList();
+
+      if (dayData.closed) {
+        bookingState.selectedHour = '';
+        container.innerHTML = '<div class="col-span-3 sm:col-span-4 p-4 rounded-2xl bg-gray-200/90 border border-gray-300 text-center text-xs font-bold text-gray-600">🔒 Este día se encuentra cerrado o sin atención disponible. Por favor elegí otro día arriba.</div>';
+        if (typeof updateBookingSummary === 'function') updateBookingSummary();
+        return;
+      }
+
+      // Si el horario seleccionado está ocupado, mover automáticamente al primer horario libre
+      const currentHk = normHourKey(bookingState.selectedHour);
+      if (!bookingState.selectedHour || dayData.hours.includes(currentHk)) {
+        const firstFree = slots.find(s => !dayData.hours.includes(normHourKey(s)));
+        bookingState.selectedHour = firstFree || '';
+      }
+
+      container.innerHTML = slots.map(h => {
+        const hk = normHourKey(h);
+        const isOccupied = dayData.hours.includes(hk);
+        const isSelected = !isOccupied && bookingState.selectedHour === h;
+        const displayTime = h.includes('hs') ? h : (h + ' hs');
+
+        if (isOccupied) {
+          return `
+            <button 
+              type="button"
+              disabled
+              title="Horario ya reservado"
+              class="py-2 px-2 rounded-xl border text-xs transition-all flex flex-col items-center justify-center bg-slate-200 text-slate-400 border-slate-300 opacity-80 cursor-not-allowed font-semibold"
+            >
+              <span class="line-through font-bold">${displayTime}</span>
+              <span class="text-[9px] font-extrabold uppercase tracking-tighter mt-0.5">🔒 Ocupado</span>
+            </button>
+          `;
+        }
+
+        return `
+          <button 
+            type="button"
+            onclick="selectBookingHour('${h}')"
+            class="py-2.5 px-2 rounded-xl border text-xs font-black transition-all flex flex-col items-center justify-center ${
+              isSelected 
+                ? 'bg-rose-600 text-white border-rose-600 shadow-sm font-black' 
+                : 'bg-[#FFF5F7] text-slate-700 border-rose-200 hover:border-rose-400 font-semibold'
+            }"
+          >
+            <span>${displayTime}</span>
+            <span class="text-[9px] opacity-75 font-semibold mt-0.5">${isSelected ? '✓ Elegido' : 'Disponible'}</span>
+          </button>
+        `;
+      }).join('');
+
+      if (typeof updateBookingSummary === 'function') updateBookingSummary();
+    }
+
+    async function refreshClientCurrentDaySlots() {
+      const dateStr = getActiveBookingDateStr();
+      if (!dateStr) return;
+      await fetchCloudDay(dateStr);
+      renderCloudBookingHoursUI();
+    }
+
+    // Conectar con las funciones de cada grupo
+    if (CLOUD_GROUP === 1) {
+      window.renderBookingHours = function() {
+        renderCloudBookingHoursUI();
+      };
+      const origSelectDay = window.selectBookingDay;
+      window.selectBookingDay = async function(dateStr, fullLabel) {
+        bookingState.selectedDateStr = dateStr;
+        bookingState.selectedDateLabel = fullLabel;
+        renderBookingDays();
+        renderCloudBookingHoursUI();
+        await fetchCloudDay(dateStr);
+        renderCloudBookingHoursUI();
+      };
+      const origInitClient = window.initClientBookingView;
+      window.initClientBookingView = async function(cfgObj) {
+        origInitClient(cfgObj);
+        await loadScheduleConfigFromCloud();
+        renderBookingDays();
+        await refreshClientCurrentDaySlots();
+        startClientCloudPolling();
+      };
+
+      window.confirmClientBookingWhatsApp = async function() {
+        const name = (document.getElementById('bookingClientName').value || '').trim();
+        if (!name) {
+          alert('Por favor escribí tu nombre arriba de todo para confirmar el turno.');
+          document.getElementById('bookingClientName').focus();
+          return;
+        }
+        const dateStr = getActiveBookingDateStr();
+        const hourStr = bookingState.selectedHour;
+        if (!dateStr || !hourStr) {
+          alert('Por favor seleccioná un horario disponible.');
+          return;
+        }
+
+        // Chequeo en vivo contra la nube antes de reservar (Freno de colisión)
+        const latestDay = await fetchCloudDay(dateStr);
+        const hk = normHourKey(hourStr);
+        if (latestDay.closed || latestDay.hours.includes(hk)) {
+          renderCloudBookingHoursUI();
+          alert('⚠️ ¡Ups! Ese horario (' + hourStr + ' hs) acaba de ser ocupado recién por otra persona. Ya actualizamos la grilla en gris para que elijas otro horario libre.');
+          return;
+        }
+
+        // Agendar y bloquear automáticamente en la nube
+        latestDay.hours.push(hk);
+        await saveCloudDay(dateStr, latestDay);
+        const detail = cleanWhatsAppText(document.getElementById('bookingServiceDetail').value || '');
+        const cleanSrv = cleanWhatsAppText(bookingState.selectedService);
+        const srvText = detail ? (cleanSrv + ' (' + detail + ')') : cleanSrv;
+        await saveCloudSlotDetail(dateStr, hourStr, { n: name, s: srvText, t: 'client' });
+
+        renderCloudBookingHoursUI();
+        if (typeof showToast === 'function') {
+          showToast('¡Horario reservado y bloqueado en la agenda!');
+        }
+
+        const cleanSalon = cleanWhatsAppText(bookingState.salonName);
+        const cleanClient = cleanWhatsAppText(name);
+        const msg = `¡Hola ${cleanSalon}! Soy *${cleanClient}*.\n✅ *Ya dejé agendado mi turno en el turnero online:*\n\n• *Servicio:* ${srvText}\n• *Día:* ${bookingState.selectedDateLabel}\n• *Horario:* ${hourStr} hs\n\n¡Muchas gracias!`;
+
+        const phone = (bookingState.salonPhone || '').replace(/[^0-9]/g, '');
+        const waUrl = phone 
+          ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`
+          : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+        window.open(waUrl, '_blank');
+      };
+    } else {
+      window.generateBookingHours = function() {
+        renderCloudBookingHoursUI();
+      };
+      window.selectBookingDate = async function(dateStr) {
+        bookingState.selectedDate = dateStr;
+        generateBookingDays();
+        renderCloudBookingHoursUI();
+        await fetchCloudDay(dateStr);
+        renderCloudBookingHoursUI();
+      };
+      const origInitUI = window.initBookingUI;
+      window.initBookingUI = async function() {
+        await loadScheduleConfigFromCloud();
+        origInitUI();
+        await refreshClientCurrentDaySlots();
+        startClientCloudPolling();
+      };
+
+      window.sendBookingViaWhatsApp = async function() {
+        const dateStr = getActiveBookingDateStr();
+        const hourStr = bookingState.selectedHour;
+        if (!dateStr || !hourStr) {
+          alert('Por favor seleccioná un horario disponible.');
+          return;
+        }
+
+        // Chequeo en vivo contra la nube antes de reservar (Freno de colisión)
+        const latestDay = await fetchCloudDay(dateStr);
+        const hk = normHourKey(hourStr);
+        if (latestDay.closed || latestDay.hours.includes(hk)) {
+          renderCloudBookingHoursUI();
+          alert('⚠️ ¡Ups! Ese horario (' + hourStr + ') acaba de ser ocupado recién por otra persona. Ya actualizamos la grilla en gris para que elijas otro horario libre.');
+          return;
+        }
+
+        let clientDisplay = 'Cliente';
+        const petEl = document.getElementById('bookingPetName');
+        const ownerEl = document.getElementById('bookingOwnerName');
+        const clientEl = document.getElementById('bookingClientName');
+        if (petEl && ownerEl) {
+          clientDisplay = petEl.value.trim() + ' (' + ownerEl.value.trim() + ')';
+        } else if (clientEl) {
+          clientDisplay = clientEl.value.trim();
+        }
+
+        // Bloquear horario en la nube automáticamente
+        latestDay.hours.push(hk);
+        await saveCloudDay(dateStr, latestDay);
+        await saveCloudSlotDetail(dateStr, hourStr, {
+          n: clientDisplay,
+          s: bookingState.selectedService || 'Turno',
+          t: 'client'
+        });
+
+        renderCloudBookingHoursUI();
+        if (typeof showToast === 'function') {
+          showToast('¡Horario reservado y bloqueado en la agenda!');
+        }
+
+        let phone = (settings.salonPhone || '').replace(/\D/g, '');
+        const dateFormatted = typeof formatDateAR === 'function' ? formatDateAR(dateStr) : dateStr;
+        let msg = '';
+        if (petEl && ownerEl) {
+          const sizeInput = document.getElementById('bookingPetSize');
+          const petSize = sizeInput ? sizeInput.value : '';
+          msg = `¡Hola ${settings.salonName || 'Peluquería Canina'}! Soy ${ownerEl.value.trim()}.\n✅ *Ya dejé agendado el turno en el turnero online:*\n\n• Mascota: ${petEl.value.trim()} (${petSize})\n• Servicio: ${bookingState.selectedService}\n• Día: ${dateFormatted}\n• Horario: ${hourStr}\n\n¡Muchas gracias!`;
+        } else {
+          const detailEl = document.getElementById('bookingServiceDetail') || document.getElementById('bookingDesignNotes');
+          const notes = detailEl ? detailEl.value.trim() : '';
+          msg = `¡Hola ${settings.salonName || ''}! Soy ${clientDisplay}.\n✅ *Ya dejé agendado mi turno en el turnero online:*\n\n• Servicio: ${bookingState.selectedService}${notes ? ' (' + notes + ')' : ''}\n• Día: ${dateFormatted}\n• Horario: ${hourStr}\n\n¡Muchas gracias!`;
+        }
+        msg = typeof cleanWhatsAppText === 'function' ? cleanWhatsAppText(msg) : msg;
+        const waUrl = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+        window.open(waUrl, '_blank');
+      };
+    }
+
+    // Hook saveSettings para sincronizar horarios del dueño a la nube
+    if (typeof window.saveSettings === 'function') {
+      const origSaveSettings = window.saveSettings;
+      window.saveSettings = function() {
+        origSaveSettings();
+        syncScheduleConfigToCloud();
+      };
+    }
+
+    function startClientCloudPolling() {
+      if (clientPollTimer) clearInterval(clientPollTimer);
+      clientPollTimer = setInterval(() => {
+        const view = document.getElementById('clientBookingView');
+        if (view && !view.classList.contains('hidden')) {
+          refreshClientCurrentDaySlots();
+        }
+      }, 6000);
+    }
+
+    // =========================================================================
+    // FUNCIONES DEL PANEL DE CONTROL MANUAL DEL DUEÑO (OCUPAR / LIBERAR)
+    // =========================================================================
+    function getOwnerUpcomingDays() {
+      const workDays = (settings.workDays && settings.workDays.length) ? settings.workDays : [1, 2, 3, 4, 5, 6];
+      const dayNamesShort = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+      const dayNamesFull = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      const list = [];
+      const cursor = new Date();
+      for (let i = 0; i <= 21 && list.length < 14; i++) {
+        const d = new Date();
+        d.setDate(cursor.getDate() + i);
+        const dow = d.getDay();
+        if (workDays.includes(dow)) {
+          const dd = String(d.getDate()).padStart(2, '0');
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const yyyy = d.getFullYear();
+          const dKey = `${yyyy}${mm}${dd}`;
+          const label = `${dayNamesFull[dow]} ${dd}/${mm}`;
+          list.push({
+            dKey,
+            shortDay: i === 0 ? 'Hoy' : dayNamesShort[dow],
+            dayNum: dd,
+            monthNum: mm,
+            fullLabel: label
+          });
+        }
+      }
+      return list;
+    }
+
+    async function openOwnerAgendaModal() {
+      const modal = document.getElementById('ownerAgendaModal');
+      if (!modal) return;
+      modal.classList.remove('hidden');
+
+      const days = getOwnerUpcomingDays();
+      if (days.length > 0 && !ownerSelectedDateKey) {
+        ownerSelectedDateKey = days[0].dKey;
+        ownerSelectedDateLabel = days[0].fullLabel;
+      }
+      renderOwnerAgendaDays(days);
+      await refreshOwnerAgendaDay();
+    }
+
+    function closeOwnerAgendaModal() {
+      const modal = document.getElementById('ownerAgendaModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function renderOwnerAgendaDays(daysList) {
+      const days = daysList || getOwnerUpcomingDays();
+      const container = document.getElementById('ownerAgendaDaysContainer');
+      if (!container) return;
+      container.innerHTML = days.map(d => {
+        const isSel = d.dKey === ownerSelectedDateKey;
+        return `
+          <button 
+            type="button"
+            onclick="selectOwnerAgendaDay('${d.dKey}', '${d.fullLabel}')"
+            class="flex-shrink-0 w-16 py-2 px-2 rounded-2xl border text-center transition-all ${
+              isSel 
+                ? 'bg-slate-900 text-white border-slate-900 shadow-md font-black' 
+                : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-400 font-bold'
+            }"
+          >
+            <span class="block text-[10px] uppercase opacity-75">${d.shortDay}</span>
+            <span class="block text-sm font-black mt-0.5">${d.dayNum}/${d.monthNum}</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    async function selectOwnerAgendaDay(dKey, fullLabel) {
+      ownerSelectedDateKey = dKey;
+      ownerSelectedDateLabel = fullLabel;
+      renderOwnerAgendaDays();
+      await refreshOwnerAgendaDay();
+    }
+
+    async function refreshOwnerAgendaDay() {
+      if (!ownerSelectedDateKey) return;
+      const listEl = document.getElementById('ownerAgendaHoursList');
+      if (listEl) {
+        listEl.innerHTML = '<div class="p-4 text-center text-xs text-slate-400 font-bold">⏳ Sincronizando horarios con la nube...</div>';
+      }
+      const dayData = await fetchCloudDay(ownerSelectedDateKey);
+
+      // Cargar detalles de los turnos ocupados en paralelo
+      await Promise.all((dayData.hours || []).map(hk => fetchCloudSlotDetail(ownerSelectedDateKey, hk)));
+      renderOwnerAgendaHours(dayData);
+    }
+
+    function renderOwnerAgendaHours(dayData) {
+      const statusLabel = document.getElementById('ownerAgendaDayStatusLabel');
+      const btnClosed = document.getElementById('btnToggleDayClosed');
+      if (dayData.closed) {
+        if (statusLabel) {
+          statusLabel.textContent = '🔒 DÍA CERRADO COMPLETO (No permite reservas)';
+          statusLabel.className = 'text-xs font-black text-rose-600';
+        }
+        if (btnClosed) {
+          btnClosed.textContent = '🔓 Reabrir Día';
+          btnClosed.className = 'px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] transition';
+        }
+      } else {
+        if (statusLabel) {
+          statusLabel.textContent = `🟢 Día Abierto · ${(dayData.hours || []).length} turno(s) ocupado(s)`;
+          statusLabel.className = 'text-xs font-black text-emerald-700';
+        }
+        if (btnClosed) {
+          btnClosed.textContent = '🔒 Cerrar Día';
+          btnClosed.className = 'px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-[11px] transition';
+        }
+      }
+
+      const listEl = document.getElementById('ownerAgendaHoursList');
+      if (!listEl) return;
+      const slots = getAllDaySlotsList();
+
+      listEl.innerHTML = slots.map(h => {
+        const hk = normHourKey(h);
+        const isOccupied = (dayData.hours || []).includes(hk);
+        const disp = formatHourKeyToDisplay(hk) + ' hs';
+        const compKey = ownerSelectedDateKey + '_' + hk;
+        const det = cloudSlotsCache.details[compKey] || { n: 'Ocupado', s: 'Reserva' };
+
+        if (isOccupied) {
+          return `
+            <div class="flex items-center justify-between p-2.5 rounded-2xl bg-slate-200/90 border border-slate-300">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <span class="px-2.5 py-1 rounded-xl bg-slate-400 text-white font-black text-xs line-through shrink-0">${disp}</span>
+                <div class="min-w-0">
+                  <p class="text-xs font-black text-slate-700 truncate">🔒 ${det.n || 'Ocupado'}</p>
+                  <p class="text-[10px] font-semibold text-slate-500 truncate">${det.s || 'Horario bloqueado'}</p>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onclick="ownerFreeSlot('${hk}')"
+                class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-[11px] shrink-0 shadow-sm active:scale-95 transition"
+              >
+                🔓 Liberar
+              </button>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="flex items-center justify-between p-2.5 rounded-2xl bg-emerald-50/70 border border-emerald-200">
+            <div class="flex items-center gap-2.5">
+              <span class="px-2.5 py-1 rounded-xl bg-emerald-600 text-white font-black text-xs shrink-0">${disp}</span>
+              <div>
+                <p class="text-xs font-extrabold text-emerald-950">🟢 Disponible</p>
+                <p class="text-[10px] font-medium text-emerald-700">Libre para reservar</p>
+              </div>
+            </div>
+            <button 
+              type="button"
+              onclick="ownerOccupySlot('${hk}')"
+              class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-950 text-white font-bold text-[11px] shrink-0 shadow-sm active:scale-95 transition"
+            >
+              🔒 Ocupar
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function ownerOccupySlot(hk) {
+      if (!ownerSelectedDateKey) return;
+      const dayData = cloudSlotsCache.days[ownerSelectedDateKey] || { closed: false, hours: [] };
+      if (!dayData.hours.includes(hk)) {
+        dayData.hours.push(hk);
+      }
+      const noteInput = document.getElementById('ownerManualClientInput');
+      const customNote = noteInput && noteInput.value.trim() ? noteInput.value.trim() : 'Ocupado Manual (Dueño)';
+      await saveCloudSlotDetail(ownerSelectedDateKey, hk, {
+        n: customNote,
+        s: 'Bloqueado por el local',
+        t: 'owner'
+      });
+      await saveCloudDay(ownerSelectedDateKey, dayData);
+      renderOwnerAgendaHours(dayData);
+      if (typeof showToast === 'function') showToast('🔒 Horario marcado como Ocupado');
+    }
+
+    async function ownerFreeSlot(hk) {
+      if (!ownerSelectedDateKey) return;
+      const dayData = cloudSlotsCache.days[ownerSelectedDateKey] || { closed: false, hours: [] };
+      dayData.hours = (dayData.hours || []).filter(x => x !== hk);
+      await saveCloudDay(ownerSelectedDateKey, dayData);
+      renderOwnerAgendaHours(dayData);
+      if (typeof showToast === 'function') showToast('🔓 Horario liberado y disponible');
+    }
+
+    async function toggleOwnerDayClosed() {
+      if (!ownerSelectedDateKey) return;
+      const dayData = cloudSlotsCache.days[ownerSelectedDateKey] || { closed: false, hours: [] };
+      dayData.closed = !dayData.closed;
+      await saveCloudDay(ownerSelectedDateKey, dayData);
+      renderOwnerAgendaHours(dayData);
+      if (typeof showToast === 'function') {
+        showToast(dayData.closed ? '🔒 Día cerrado por completo' : '🔓 Día reabierto para turnos');
+      }
+    }
+
+    async function freeAllSlotsInDay() {
+      if (!ownerSelectedDateKey) return;
+      if (!confirm('¿Querés liberar TODOS los horarios ocupados de este día?')) return;
+      const dayData = { closed: false, hours: [] };
+      await saveCloudDay(ownerSelectedDateKey, dayData);
+      renderOwnerAgendaHours(dayData);
+      if (typeof showToast === 'function') showToast('🔓 Todos los horarios del día fueron liberados');
+    }
+
+    // Inicializar al cargar si ya está en vista de reserva
+    window.addEventListener('DOMContentLoaded', () => {
+      const badge = document.getElementById('turneroHeaderBadge');
+      if (badge) {
+        badge.onclick = (e) => {
+          e.stopPropagation();
+          openOwnerAgendaModal();
+        };
+        badge.title = 'Tocar para administrar horarios y turnos manualmente';
+      }
+      setTimeout(() => {
+        const view = document.getElementById('clientBookingView');
+        if (view && !view.classList.contains('hidden')) {
+          refreshClientCurrentDaySlots();
+          startClientCloudPolling();
+        }
+      }, 300);
+    });
+  </script>
 
 </body>
 </html>
