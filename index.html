@@ -2819,7 +2819,7 @@
         // Agendar y bloquear automáticamente en la nube
         latestDay.hours.push(hk);
         await saveCloudDay(dateStr, latestDay);
-        const detailInput = document.getElementById('bookingDesignPreference') || document.getElementById('bookingServiceDetail');
+        const detailInput = document.getElementById('bookingDesignPreference');
         const detail = detailInput ? cleanWhatsAppText(detailInput.value || '') : '';
         const cleanSrv = cleanWhatsAppText(bookingState.selectedService);
         const srvText = detail ? (cleanSrv + ' (' + detail + ')') : cleanSrv;
